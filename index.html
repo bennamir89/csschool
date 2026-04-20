@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Computer Science Term 3 Newsletter - PDF Edition</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1565C0;
+            --secondary-color: #0288D1;
+            --accent-color: #FF6D00;
+            --bg-color: #FFFFFF;
+            --text-main: #263238;
+            --text-light: #546E7A;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #E0E0E0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        .newsletter-container {
+            width: 700px;
+            min-height: 1000px;
+            background-color: var(--bg-color);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Header Section */
+        .header {
+            background: linear-gradient(120deg, #0D47A1 0%, #1976D2 100%);
+            color: white;
+            padding: 30px 40px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .department-name {
+            font-family: 'Merriweather', serif;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        .date-badge {
+            background-color: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .main-title {
+            font-family: 'Merriweather', serif;
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            font-weight: 300;
+            opacity: 0.9;
+        }
+
+        /* Content Layout */
+        .content-area {
+            padding: 0 40px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        /* Introduction */
+        .introduction {
+            font-size: 14px;
+            color: var(--text-light);
+            border-left: 4px solid var(--accent-color);
+            padding-left: 15px;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        /* Article Styles */
+        .article {
+            margin-bottom: 20px;
+        }
+
+        .article-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #E0E0E0;
+            padding-bottom: 10px;
+        }
+
+        .article-icon {
+            background-color: #E3F2FD;
+            color: var(--primary-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .article-title {
+            font-family: 'Merriweather', serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1565C0;
+        }
+
+        .article-image-container {
+            width: 100%;
+            height: 140px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background-color: #f5f5f5; /* Placeholder bg while loading */
+        }
+
+        .article-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .article-content {
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.6;
+            text-align: justify;
+        }
+
+        .article-content p {
+            margin-bottom: 10px;
+        }
+
+        .article-content strong {
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .link-highlight {
+            color: var(--primary-color);
+            background-color: rgba(21, 101, 192, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        /* Specific Article Variations */
+        .article:nth-child(3) .article-icon { background-color: #E8F5E9; color: #43A047; }
+        .article:nth-child(3) .article-title { color: #2E7D32; }
+        
+        .article:nth-child(4) .article-icon { background-color: #F3E5F5; color: #7B1FA2; }
+        .article:nth-child(4) .article-title { color: #6A1B9A; }
+
+        .article:nth-child(5) .article-icon { background-color: #FBE9E7; color: #E64A19; }
+        .article:nth-child(5) .article-title { color: #D84315; }
+
+        .article:nth-child(6) .article-icon { background-color: #E0F7FA; color: #00838F; }
+        .article:nth-child(6) .article-title { color: #006064; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px 40px;
+            background: #263238;
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            margin-top: auto;
+        }
+
+        .footer-divider {
+            width: 60px;
+            height: 4px;
+            background: var(--accent-color);
+            margin: 0 auto 15px;
+            border-radius: 2px;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-icons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .footer-icons i {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        /* Page Break Marker (hidden in view, visible in print) */
+        .page-break {
+            display: none;
+        }
+
+        @media print {
+            body {
+                background-color: white;
+            }
+            .newsletter-container {
+                box-shadow: none;
+                width: 100%;
+                max-width: 100%;
+            }
+            .page-break {
+                display: block;
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="newsletter-container">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-top">
+            <div class="department-name">Computer Science Department</div>
+            <div class="date-badge">Term 3 2026</div>
+        </div>
+        <h1 class="main-title">Term 3 Newsletter</h1>
+        <p class="subtitle">Celebrating Student Achievements in Technology and Innovation</p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="content-area">
+        
+        <!-- Introduction -->
+        <div class="introduction">
+            <p>This term, our Computer Science students have demonstrated remarkable creativity and technical prowess across various projects. From game design to web development and advanced programming, Term 3 has been a period of exploration, learning, and impressive accomplishments.</p>
+        </div>
+
+        <!-- Article 1: STEM Y7-Y9 -->
+        <article class="article">
+            <div class="article-header">
+                <div class="article-icon"><i class="material-icons">videogame_asset</i></div>
+                <h2 class="article-title">STEM Project: Game Design (Years 7-9)</h2>
+            </div>
+            <div class="article-image-container">
+                <!-- Image 3: Classroom scene about "First in the game..." -->
+                <img src="https://z-cdn-media.chatglm.cn/files/680787b2-98c1-4b34-b98a-57bfdc8635af.jpg?auth_key=1876647975-7cb5db80c7724d9bb7c8171368b5584f-0-e4ba2ddfa8a75ea9a24dddbd5d5cbbd4" alt="Student presenting game design challenges" class="article-image">
+            </div>
+            <div class="article-content">
+                <p>This term, our younger students in Years 7-9 embarked on an exciting journey into game development using <strong>Flowlab.io</strong>, a visual game creator that works directly in the browser. This platform allowed students to focus on game design concepts and logic without being overwhelmed by complex syntax.</p>
+                <p>Students learned about <strong>game mechanics, sprite behavior, collision detection, and game logic</strong> through an intuitive drag-and-drop interface. They progressed from simple concept games to more complex interactive experiences, demonstrating remarkable creativity and problem-solving skills. The hands-on approach helped students understand fundamental programming concepts such as <strong>variables, conditions, and loops</strong> in a visually engaging way.</p>
+                <p>Many students created multiple iterations of their games, testing and refining based on peer feedback. This iterative process not only improved their final products but also taught valuable lessons about <strong>user experience and iterative design</strong>, essential skills in modern software development.</p>
+            </div>
+        </article>
+
+        <!-- Article 2: STEM Y10-Y12 -->
+        <article class="article">
+            <div class="article-header">
+                <div class="article-icon"><i class="material-icons">smart_toy</i></div>
+                <h2 class="article-title">STEM Project: AI-Powered Web Apps (Years 10-12)</h2>
+            </div>
+            <div class="article-image-container">
+                <!-- Image 5: Students working on laptops with software interface -->
+                <img src="https://z-cdn-media.chatglm.cn/files/1303f3f8-3775-4d8b-937c-4cb8c6f55e68.jpg?auth_key=1876647975-c865ba7bba724570ba452e240c73b47b-0-61745d3c097b71d733d80b0b6b844a85" alt="Students working on 3D modeling and programming software" class="article-image">
+            </div>
+            <div class="article-content">
+                <p>Our senior students took their technical skills to the next level this term by creating web applications powered by <strong>Artificial Intelligence tools</strong>. This cutting-edge project introduced students to the future of web development, where AI assists in writing code, generating content, and solving complex problems.</p>
+                <p>Students learned to leverage various AI-powered development tools to <strong>streamline the coding process, debug more efficiently, and implement advanced features</strong> that would typically require extensive programming knowledge. This approach allowed students to focus on higher-level design and functionality while AI handled routine coding tasks.</p>
+                <p>The results were impressive, with students deploying fully functional web applications. Notable projects include <span class="link-highlight">mingmei.vercel.app</span>, an innovative web application showcasing modern design principles, and <span class="link-highlight">adszont.vercel.app/index.html</span>, which demonstrates advanced interactivity and user engagement. These projects highlight how our students are learning to work with <strong>emerging technologies</strong> that will shape the future of software development.</p>
+            </div>
+        </article>
+
+        <!-- Article 3: CSD -->
+        <article class="article">
+            <div class="article-header">
+                <div class="article-icon"><i class="material-icons">animation</i></div>
+                <h2 class="article-title">Computer Science Discovery: Interactive Animations</h2>
+            </div>
+            <div class="article-image-container">
+                <!-- Image 4: Laptop screen showing "WELL DONE!" -->
+                <img src="https://z-cdn-media.chatglm.cn/files/9c658192-d433-4d38-b738-62696e1ebf22.jpg?auth_key=1876647975-5c92cb43fcd1497787d0e30d588995fd-0-bf87deabbeded6bd078112e1366fe964" alt="Student achieving success with 'Well Done' on screen" class="article-image">
+            </div>
+            <div class="article-content">
+                <p>In the Computer Science Discovery program, students explored the exciting world of <strong>interactive animations and games</strong> using Code.org's Game Lab environment. This unit provided an excellent introduction to <strong>JavaScript programming</strong> while allowing students to express their creativity through visual projects.</p>
+                <p>Students began with simple shape-based animations and progressively developed more complex sprite-based games. They learned fundamental programming concepts including <strong>functions, parameters, return values, and object-oriented programming</strong> through hands-on projects that made abstract concepts tangible and engaging.</p>
+                <p>The curriculum emphasized the <strong>design process</strong> that professional computer scientists use, from brainstorming and planning to implementation and testing. Students created personalized, interactive programs that responded to user input, demonstrating both technical skill and creative thinking. By the end of the term, students had developed a solid foundation in programming logic and gained valuable experience in creating interactive digital experiences.</p>
+            </div>
+        </article>
+
+        <!-- Article 4: AP CS A -->
+        <article class="article">
+            <div class="article-header">
+                <div class="article-icon"><i class="material-icons">terminal</i></div>
+                <h2 class="article-title">AP Computer Science A: Java Programming Mastery</h2>
+            </div>
+            <div class="article-image-container">
+                <!-- Image 1: Students engaging in Problem Solving & Engineering challenge -->
+                <img src="https://z-cdn-media.chatglm.cn/files/cb2be11c-a7a0-4352-8f11-7e758835913b.jpg?auth_key=1876647975-10162411811e46f6aef7e98b72531aa0-0-1be030287946f8caa46721774ca13e5a" alt="Classroom engineering challenge and problem solving activities" class="article-image">
+            </div>
+            <div class="article-content">
+                <p>Our AP Computer Science A students continued their deep dive into <strong>Java programming</strong> this term, focusing on advanced concepts that form the foundation of computer science at the university level. The curriculum covered critical topics including <strong>object-oriented programming, class design, inheritance, and data structures</strong>.</p>
+                <p>Students developed their understanding of <strong>objects and methods, selection and iteration structures, and algorithmic thinking</strong> through challenging programming assignments. They learned to create efficient, well-structured code and to debug complex programs using systematic approaches.</p>
+                <p>The term included several significant projects that required students to apply multiple concepts simultaneously, mirroring real-world software development scenarios. Students worked with <strong>arrays, ArrayLists, and 2D arrays</strong>, developing practical skills in data manipulation and algorithm implementation. These challenging exercises have prepared students well for the AP examination and for future studies in computer science.</p>
+            </div>
+        </article>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-divider"></div>
+        <div class="footer-content">
+            <div>Computer Science Department • Term 3 2026</div>
+            <div class="footer-icons">
+                <i class="material-icons">computer</i>
+                <i class="material-icons">code</i>
+                <i class="material-icons">school</i>
+            </div>
+            <div>Empowering Future Innovators</div>
+        </div>
+    </footer>
+</div>
+
+</body>
+</html>
