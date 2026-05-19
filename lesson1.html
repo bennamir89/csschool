@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson 4: The For Statement (Python)</title>
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            --primary-color: #2563eb; /* Royal Blue */
+            --secondary-color: #1e40af; /* Darker Blue */
+            --accent-color: #f59e0b; /* Amber for highlights */
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --slide-padding: 4rem 2rem;
+            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --font-code: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e2e8f0;
+            z-index: 1000;
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .btn-print {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-print:hover {
+            background-color: var(--secondary-color);
+        }
+
+        /* --- SLIDE STRUCTURE --- */
+        section.slide {
+            min-height: 100vh;
+            padding: var(--slide-padding);
+            padding-top: 6rem; /* Space for fixed nav */
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1, h2, h3 {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        h1 { font-size: 2.5rem; }
+        h2 { font-size: 2rem; border-bottom: 2px solid var(--accent-color); display: inline-block; padding-bottom: 0.5rem; margin-bottom: 2rem; }
+        h3 { font-size: 1.5rem; margin-top: 1.5rem; }
+
+        p { margin-bottom: 1rem; font-size: 1.1rem; }
+
+        /* --- BILINGUAL SUPPORT --- */
+        .lang-support {
+            display: block;
+            font-size: 0.9rem;
+            color: #64748b;
+            font-style: italic;
+            margin-top: -0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .zh { color: #d946ef; margin-right: 10px; } /* Magenta for Chinese */
+        .ko { color: #3b82f6; } /* Blue for Korean */
+
+        /* --- CODE BLOCKS --- */
+        .code-container {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: var(--font-code);
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .keyword { color: #569cd6; } /* Python Keywords */
+        .string { color: #ce9178; } /* Strings */
+        .number { color: #b5cea8; } /* Numbers */
+        .comment { color: #6a9955; } /* Comments */
+        .function { color: #dcdcaa; } /* Functions */
+
+        /* --- SPECIFIC SLIDE STYLES --- */
+        
+        /* Objectives List */
+        .objectives-list {
+            list-style: none;
+        }
+        .objectives-list li {
+            background: white;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            border-left: 5px solid var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Starter Cards */
+        .starter-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        /* Diagram/Table */
+        table.trace-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            background: white;
+        }
+        .trace-table th, .trace-table td {
+            border: 1px solid #cbd5e1;
+            padding: 0.8rem;
+            text-align: center;
+        }
+        .trace-table th { background-color: #f1f5f9; }
+
+        /* Homework / Printable Area */
+        #homework {
+            background-color: white;
+            border: 2px solid #333;
+            padding: 3rem;
+            min-height: 100vh;
+        }
+
+        .worksheet-section {
+            margin-bottom: 3rem;
+        }
+
+        .handwriting-lines {
+            width: 100%;
+            height: 150px; /* Space for answer */
+            background-image: linear-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 100% 2rem;
+            line-height: 2rem;
+            margin-top: 1rem;
+            border: 1px dashed #cbd5e1;
+        }
+
+        .footer-info {
+            margin-top: auto;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #64748b;
+            padding-top: 2rem;
+        }
+
+        /* --- PRINT STYLES --- */
+        @media print {
+            nav, .slide:not(#homework), #references {
+                display: none !important;
+            }
+            #homework {
+                display: block !important;
+                border: none;
+                padding: 0;
+                height: auto;
+                page-break-after: always;
+            }
+            body {
+                background: white;
+                color: black;
+            }
+            .handwriting-lines {
+                border-bottom: 1px solid #000;
+                background: none;
+                height: 100px;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .starter-grid { grid-template-columns: 1fr; }
+            .nav-links { display: none; } /* Hide nav links on mobile, keep print button */
+            h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVIGATION -->
+    <nav>
+        <div class="nav-brand">IGCSE CS: Python Loops</div>
+        <div class="nav-links">
+            <a href="#objectives">Objectives</a>
+            <a href="#engage">Engage</a>
+            <a href="#explain">Explain</a>
+            <a href="#extend">Extend</a>
+            <a href="#evaluate">Evaluate</a>
+            <a href="#homework">Homework</a>
+        </div>
+        <button class="btn-print" onclick="window.print()">🖨️ Print Homework</button>
+    </nav>
+
+    <!-- SLIDE 1: LESSON OBJECTIVES -->
+    <section id="objectives" class="slide">
+        <h1>Lesson 4: The For Statement</h1>
+        <p class="lang-support">
+            <span class="zh">For 循环语句</span> <span class="ko">For 반복문</span>
+        </p>
+        
+        <h2>Lesson Objectives</h2>
+        <ul class="objectives-list">
+            <li>
+                <strong>Understand</strong> the concept of a <em>Count-Controlled Loop</em>.
+                <span class="lang-support"><span class="zh">理解 计数控制循环 的概念。</span> <span class="ko">카운트 제어 반복문의 개념을 이해합니다.</span></span>
+            </li>
+            <li>
+                <strong>Identify</strong> the syntax of a <code>for</code> loop in Python.
+                <span class="lang-support"><span class="zh">识别 Python 中 for 循环的 语法。</span> <span class="ko">Python의 for 반복문 구문을 식별합니다.</span></span>
+            </li>
+            <li>
+                <strong>Write</strong> programs using the <code>range()</code> function.
+                <span class="lang-support"><span class="zh">使用 range() 函数 编写程序。</span> <span class="ko">range() 함수를 사용하여 프로그램을 작성합니다.</span></span>
+            </li>
+        </ul>
+    </section>
+
+    <!-- SLIDE 2: ENGAGE (STARTER) -->
+    <section id="engage" class="slide">
+        <h2>1. Engage: The Power of Repetition</h2>
+        <div class="starter-grid">
+            <div class="card">
+                <h3>Real Life Task</h3>
+                <p>Imagine you are a PE teacher. You want your students to do 10 jumping jacks.</p>
+                <p>You would say: <strong>"Do 10 jumping jacks!"</strong></p>
+                <p>You wouldn't say: "Do a jumping jack. Now do another. Now do another..." (10 times).</p>
+            </div>
+            <div class="card">
+                <h3>Computing Task</h3>
+                <p>If we want a computer to print numbers 1 to 10:</p>
+                <div class="code-container" style="font-size: 0.8rem;">
+                    <span class="function">print</span>(1)<br>
+                    <span class="function">print</span>(2)<br>
+                    <span class="function">print</span>(3)<br>
+                    ...<br>
+                    <span class="comment"># This is inefficient coding!</span>
+                </div>
+                <p><strong>Loops</strong> allow us to repeat a block of code a specific number of times.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 3: EXPLAIN (CONTENT) -->
+    <section id="explain" class="slide">
+        <h2>2. Explain: The For Loop</h2>
+        
+        <h3>Syntax Structure</h3>
+        <p>In Python, a count-controlled loop uses the <code>for</code> keyword combined with <code>range()</code>.</p>
+        
+        <div class="code-container">
+            <span class="keyword">for</span> <span class="string">i</span> <span class="keyword">in</span> <span class="function">range</span>(<span class="number">5</span>):<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="function">print</span>(<span class="string">"Hello"</span>)
+        </div>
+
+        <p class="lang-support">
+            <strong>Key Terms:</strong><br>
+            <span class="zh">关键词</span> / <span class="ko">핵심 용어</span>
+        </p>
+
+        <ul>
+            <li><strong>for</strong>: Keyword to start the loop. <span class="zh">关键字：开始循环</span></li>
+            <li><strong>i</strong>: The <em>iterator</em> (variable) that changes each time. <span class="zh">迭代器（变量）</span></li>
+            <li><strong>range()</strong>: A function that generates a sequence of numbers. <span class="zh">生成数字序列的函数</span></li>
+        </ul>
+
+        <h3>How `range()` works</h3>
+        <p><code>range(stop)</code> generates numbers from <strong>0</strong> up to (but not including) <strong>stop</strong>.</p>
+        
+        <table class="trace-table">
+            <tr>
+                <th>Code</th>
+                <th>Output</th>
+                <th>Explanation</th>
+            </tr>
+            <tr>
+                <td><code>range(5)</code></td>
+                <td>0, 1, 2, 3, 4</td>
+                <td>Stops before 5. (5 numbers total)</td>
+            </tr>
+            <tr>
+                <td><code>range(1, 4)</code></td>
+                <td>1, 2, 3</td>
+                <td>Start at 1, stop before 4.</td>
+            </tr>
+        </table>
+    </section>
+
+    <!-- SLIDE 4: EXPLAIN (TRACING) -->
+    <section id="explain-2" class="slide">
+        <h2>2. Explain: Tracing the Loop</h2>
+        <p>Let's trace exactly what happens when this code runs.</p>
+        
+        <div class="code-container">
+            <span class="keyword">for</span> count <span class="keyword">in</span> <span class="function">range</span>(<span class="number">3</span>):<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="function">print</span>(<span class="string">"Number is"</span>, count)
+        </div>
+
+        <br>
+        <table class="trace-table">
+            <thead>
+                <tr>
+                    <th>Iteration Loop #</th>
+                    <th>Value of 'count'</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1st</td>
+                    <td>0</td>
+                    <td>Prints "Number is 0"</td>
+                </tr>
+                <tr>
+                    <td>2nd</td>
+                    <td>1</td>
+                    <td>Prints "Number is 1"</td>
+                </tr>
+                <tr>
+                    <td>3rd</td>
+                    <td>2</td>
+                    <td>Prints "Number is 2"</td>
+                </tr>
+                <tr>
+                    <td>4th</td>
+                    <td>(Stop)</td>
+                    <td>Loop ends because 3 is not &lt; 3.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- SLIDE 5: EXTEND (EXERCISE) -->
+    <section id="extend" class="slide">
+        <h2>3. Extend: Coding Challenge</h2>
+        <div class="card">
+            <h3>Task: The Countdown Timer</h3>
+            <p>Write a Python program that prints a countdown from 5 down to 1. After the countdown, it should print "Blast off!"</p>
+            
+            <p><strong>Hint:</strong> Remember <code>range(start, stop, step)</code>. If we want to go down, our step might be <code>-1</code>.</p>
+            
+            <div class="code-container">
+                <span class="comment"># Write your code here mentally or in your IDE</span><br>
+                <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">5</span>, <span class="number">0</span>, <span class="number">-1</span>):<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="function">print</span>(i)<br>
+                <span class="function">print</span>(<span class="string">"Blast off!"</span>)
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 6: EVALUATE (EXIT TICKET) -->
+    <section id="evaluate" class="slide">
+        <h2>4. Evaluate: Exit Ticket</h2>
+        <p>Answer these 3 questions before you leave.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="card">
+                <p><strong>Q1:</strong> What is the output of <code>range(3)</code>?</p>
+                <p>A) 1, 2, 3 &nbsp;&nbsp; B) 0, 1, 2 &nbsp;&nbsp; C) 0, 1, 2, 3</p>
+            </div>
+            
+            <div class="card">
+                <p><strong>Q2:</strong> True or False: The code inside the loop (indented code) runs only once.</p>
+            </div>
+
+            <div class="card">
+                <p><strong>Q3:</strong> Fill in the blank: <code>for x ______ range(10):</code></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 7: HOMEWORK (PRINTABLE WORKSHEET) -->
+    <section id="homework" class="slide">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h2>Homework: For Loops Practice</h2>
+            <p>Name: _______________________ Date: _______________________</p>
+        </div>
+
+        <div class="worksheet-section">
+            <h3>Part A: Multiple Choice</h3>
+            <p>Circle the correct answer.</p>
+            <ol>
+                <li style="margin-bottom: 10px;">
+                    Which keyword is used to start a count-controlled loop in Python?
+                    <br> a) while &nbsp;&nbsp; b) repeat &nbsp;&nbsp; c) for
+                </li>
+                <li>
+                    What does <code>range(1, 5)</code> produce?
+                    <br> a) 1, 2, 3, 4, 5 &nbsp;&nbsp; b) 1, 2, 3, 4 &nbsp;&nbsp; c) 0, 1, 2, 3, 4
+                </li>
+            </ol>
+        </div>
+
+        <div class="worksheet-section">
+            <h3>Part B: Code Prediction</h3>
+            <p>Look at the code below. What will be the output on the screen?</p>
+            
+            <div style="background: #f1f5f9; padding: 10px; border: 1px solid #ccc; font-family: monospace;">
+                for i in range(3):<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;print("IGCSE")
+            </div>
+
+            <p><strong>Output:</strong></p>
+            <div class="handwriting-lines"></div>
+            <div class="handwriting-lines"></div>
+        </div>
+
+        <div class="worksheet-section">
+            <h3>Part C: Writing Code</h3>
+            <p>Write a Python <code>for</code> loop that prints the <strong>Even Numbers</strong> from 2 to 10.</p>
+            <p>(Hint: You can use step=2 in the range function)</p>
+            
+            <div class="handwriting-lines" style="height: 200px;"></div>
+        </div>
+
+        <div style="margin-top: 3rem; border-top: 2px solid #000; padding-top: 1rem;">
+            <p><strong>Mark Scheme (For Teachers)</strong></p>
+            <p><em>Part A: 1=c, 2=b.</em></p>
+            <p><em>Part B:</em><br>
+            IGCSE<br>
+            IGCSE<br>
+            IGCSE</p>
+            <p><em>Part C:</em><br>
+            for i in range(2, 11, 2):<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;print(i)</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 8: REFERENCES -->
+    <section id="references" class="slide">
+        <h2>References & Resources</h2>
+        <ul>
+            <li><a href="https://code.org" target="_blank">Code.org</a> - Computer Science Fundamentals</li>
+            <li><a href="https://codehs.com" target="_blank">CodeHS</a> - Python Intro Course</li>
+            <li><a href="https://www.w3schools.com/python/python_for_loops.asp" target="_blank">W3Schools - Python For Loops</a></li>
+        </ul>
+        <div class="footer-info">
+            Created for IGCSE Computer Science Students | Lesson 4
+        </div>
+    </section>
+
+    <!-- SCRIPT FOR NAVIGATION HIGHLIGHTING -->
+    <script>
+        // Simple script to highlight active link in navbar
+        const sections = document.querySelectorAll('section.slide');
+        const navLinks = document.querySelectorAll('.nav-links a');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= (sectionTop - sectionHeight / 3)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.style.color = 'var(--text-color)';
+                link.style.borderBottom = 'none';
+                if (link.getAttribute('href').includes(current)) {
+                    link.style.color = 'var(--primary-color)';
+                    link.style.borderBottom = '2px solid var(--primary-color)';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
