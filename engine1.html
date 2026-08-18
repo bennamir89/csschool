@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineering Design - Unit 1: What is Engineering?</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --bg: #0f1114;
+    --bg2: #181b20;
+    --bg3: #1e2228;
+    --fg: #e8eaed;
+    --fg-muted: #9aa0a9;
+    --accent: #f59e0b;
+    --accent2: #fb923c;
+    --accent-glow: rgba(245, 158, 11, 0.15);
+    --green: #22c55e;
+    --red: #ef4444;
+    --blue: #38bdf8;
+    --card: #1a1d23;
+    --border: #2a2e36;
+    --radius: 12px;
+    --slide-transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* --- Background atmosphere --- */
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(245,158,11,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245,158,11,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  .bg-glow {
+    position: fixed; z-index: 0; pointer-events: none;
+    width: 600px; height: 600px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%);
+    top: -200px; right: -100px;
+    animation: glowDrift 20s ease-in-out infinite alternate;
+  }
+  .bg-glow-2 {
+    position: fixed; z-index: 0; pointer-events: none;
+    width: 500px; height: 500px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(56,189,248,0.04) 0%, transparent 70%);
+    bottom: -150px; left: -100px;
+    animation: glowDrift 25s ease-in-out infinite alternate-reverse;
+  }
+  @keyframes glowDrift {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(40px, 30px) scale(1.15); }
+  }
+
+  /* --- Top bar --- */
+  .top-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+    background: rgba(15,17,20,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .top-bar-left { display: flex; align-items: center; gap: 14px; }
+  .top-bar-logo {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; color: #000;
+  }
+  .top-bar-title { font-size: 13px; font-weight: 500; color: var(--fg-muted); }
+  .top-bar-title span { color: var(--accent); font-weight: 600; }
+  .top-bar-right { display: flex; align-items: center; gap: 16px; }
+  .top-bar-badge {
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+    border-radius: 20px; background: var(--accent-glow);
+    color: var(--accent); border: 1px solid rgba(245,158,11,0.2);
+  }
+  .timer-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: var(--fg-muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .timer-display i { font-size: 11px; color: var(--accent); }
+
+  /* --- Slide container --- */
+  .slides-wrapper {
+    position: fixed; inset: 0; z-index: 10;
+    padding-top: 52px;
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute;
+    top: 52px; left: 0; right: 0; bottom: 0;
+    padding: 40px 60px;
+    display: flex; flex-direction: column;
+    opacity: 0; transform: translateX(60px);
+    transition: opacity var(--slide-transition), transform var(--slide-transition);
+    pointer-events: none;
+    overflow-y: auto;
+  }
+  .slide.active {
+    opacity: 1; transform: translateX(0);
+    pointer-events: all;
+  }
+  .slide.exit-left {
+    opacity: 0; transform: translateX(-60px);
+  }
+  .slide::-webkit-scrollbar { width: 4px; }
+  .slide::-webkit-scrollbar-track { background: transparent; }
+  .slide::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* --- Slide elements --- */
+  .slide-phase {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1.5px; margin-bottom: 12px;
+    padding: 4px 12px; border-radius: 20px; width: fit-content;
+  }
+  .phase-engage { background: rgba(34,197,94,0.12); color: var(--green); }
+  .phase-explain { background: rgba(56,189,248,0.12); color: var(--blue); }
+  .phase-extend { background: rgba(245,158,11,0.12); color: var(--accent); }
+  .phase-evaluate { background: rgba(239,68,68,0.12); color: var(--red); }
+  .phase-overview { background: rgba(168,85,247,0.12); color: #a855f7; }
+
+  .slide-title {
+    font-size: clamp(28px, 3.5vw, 42px);
+    font-weight: 700; line-height: 1.15;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--fg) 60%, var(--fg-muted));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .slide-subtitle {
+    font-size: 16px; color: var(--fg-muted); line-height: 1.5;
+    margin-bottom: 28px; max-width: 700px;
+  }
+
+  /* --- Cards --- */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .card:hover {
+    border-color: rgba(245,158,11,0.3);
+    box-shadow: 0 0 20px rgba(245,158,11,0.05);
+  }
+  .card-grid { display: grid; gap: 16px; }
+  .card-grid-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .card-icon {
+    width: 42px; height: 42px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; margin-bottom: 14px;
+  }
+  .card-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .card-text { font-size: 13.5px; color: var(--fg-muted); line-height: 1.65; }
+
+  /* --- Lists --- */
+  .obj-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  .obj-list li {
+    display: flex; align-items: flex-start; gap: 12px;
+    font-size: 15px; line-height: 1.5; color: var(--fg);
+  }
+  .obj-list .num {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px;
+    background: var(--accent-glow); color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; margin-top: 1px;
+  }
+
+  /* --- Definition box --- */
+  .def-box {
+    background: linear-gradient(135deg, rgba(245,158,11,0.06), rgba(245,158,11,0.02));
+    border: 1px solid rgba(245,158,11,0.15);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 24px 28px;
+  }
+  .def-box .label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.5px; color: var(--accent); margin-bottom: 8px;
+  }
+  .def-box p { font-size: 16px; line-height: 1.65; color: var(--fg); }
+
+  /* --- Teacher note --- */
+  .teacher-note {
+    background: rgba(168,85,247,0.06);
+    border: 1px dashed rgba(168,85,247,0.25);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-top: 20px;
+    font-size: 13px; color: #c084fc; line-height: 1.6;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .teacher-note i { margin-top: 2px; font-size: 14px; }
+
+  /* --- Video embed area --- */
+  .video-placeholder {
+    width: 100%; max-width: 640px; aspect-ratio: 16/9;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px;
+    cursor: pointer; transition: all 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .video-placeholder:hover {
+    border-color: var(--accent);
+    background: rgba(245,158,11,0.04);
+  }
+  .video-placeholder .play-icon {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--accent); color: #000;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; transition: transform 0.3s;
+  }
+  .video-placeholder:hover .play-icon { transform: scale(1.1); }
+  .video-placeholder .vid-text { font-size: 13px; color: var(--fg-muted); }
+  .video-placeholder .vid-title { font-size: 14px; font-weight: 600; color: var(--fg); }
+
+  /* --- Process steps --- */
+  .process-steps {
+    display: flex; gap: 0; align-items: flex-start;
+    position: relative; padding: 10px 0;
+  }
+  .process-step {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; text-align: center;
+    position: relative; z-index: 1;
+  }
+  .step-circle {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--bg3); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700; color: var(--fg-muted);
+    transition: all 0.3s; position: relative; z-index: 2;
+  }
+  .process-step:hover .step-circle {
+    border-color: var(--accent); color: var(--accent);
+    box-shadow: 0 0 16px rgba(245,158,11,0.2);
+  }
+  .step-label { font-size: 12px; font-weight: 600; margin-top: 10px; color: var(--fg); }
+  .step-desc { font-size: 11px; color: var(--fg-muted); margin-top: 4px; max-width: 100px; line-height: 1.4; }
+  .process-line {
+    position: absolute; top: 34px; left: 10%; right: 10%;
+    height: 2px; background: var(--border); z-index: 0;
+  }
+  .process-arrow {
+    position: absolute; top: 28px; right: -4px;
+    color: var(--border); font-size: 12px; z-index: 1;
+  }
+
+  /* --- Comparison table --- */
+  .compare-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .compare-table th {
+    padding: 14px 20px; font-size: 13px; font-weight: 600;
+    text-align: left; background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-table td {
+    padding: 12px 20px; font-size: 13.5px; line-height: 1.5;
+    color: var(--fg-muted); border-bottom: 1px solid var(--border);
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table td:first-child { color: var(--fg); font-weight: 500; }
+
+  /* --- Worksheet items --- */
+  .ws-item {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 24px;
+    margin-bottom: 12px;
+  }
+  .ws-q {
+    font-size: 14px; font-weight: 600; margin-bottom: 10px;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .ws-q .q-num {
+    flex-shrink: 0; width: 24px; height: 24px; border-radius: 6px;
+    background: var(--accent); color: #000;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+  .ws-lines {
+    display: flex; flex-direction: column; gap: 14px; padding-left: 34px;
+  }
+  .ws-line {
+    border-bottom: 1px solid var(--border); height: 20px;
+  }
+
+  /* --- Exit ticket --- */
+  .exit-ticket-box {
+    background: linear-gradient(135deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02));
+    border: 1px solid rgba(239,68,68,0.15);
+    border-radius: var(--radius); padding: 28px;
+  }
+
+  /* --- Homework printable --- */
+  .print-area {
+    background: #fff; color: #111; border-radius: var(--radius);
+    padding: 40px; font-family: 'Space Grotesk', sans-serif;
+    position: relative;
+  }
+  .print-area h2 { color: #111; font-size: 20px; margin-bottom: 4px; }
+  .print-area .print-sub { color: #555; font-size: 12px; margin-bottom: 20px; }
+  .print-area .print-section { margin-bottom: 20px; }
+  .print-area .print-q {
+    font-size: 13px; font-weight: 600; color: #111;
+    margin-bottom: 8px; display: flex; gap: 8px;
+  }
+  .print-area .print-q .pq {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #f59e0b; color: #000;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+  }
+  .print-area .print-lines { padding-left: 28px; display: flex; flex-direction: column; gap: 18px; margin-bottom: 20px; }
+  .print-area .print-line { border-bottom: 1px solid #ccc; height: 22px; }
+  .print-area .print-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .print-area .print-field label { font-size: 11px; font-weight: 600; color: #666; display: block; margin-bottom: 4px; }
+  .print-area .print-field .pf-line { border-bottom: 1.5px solid #333; height: 24px; }
+  .print-area .print-note { font-size: 11px; color: #888; border-top: 1px solid #ddd; padding-top: 12px; }
+
+  /* --- Mark scheme --- */
+  .ms-item {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 22px;
+    margin-bottom: 10px;
+  }
+  .ms-q { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .ms-ans { font-size: 13px; color: var(--green); line-height: 1.5; }
+  .ms-points { font-size: 11px; color: var(--accent); font-weight: 600; margin-top: 6px; }
+
+  /* --- Bottom nav --- */
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    height: 56px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+    background: rgba(15,17,20,0.9);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+  }
+  .nav-btn {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--fg-muted); font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .nav-btn:disabled:hover { border-color: var(--border); color: var(--fg-muted); }
+
+  .slide-dots {
+    display: flex; gap: 6px; align-items: center;
+  }
+  .slide-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); cursor: pointer;
+    transition: all 0.3s;
+  }
+  .slide-dot.active {
+    background: var(--accent); width: 24px; border-radius: 4px;
+  }
+  .slide-dot:hover:not(.active) { background: var(--fg-muted); }
+
+  .slide-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--fg-muted);
+    min-width: 50px; text-align: right;
+  }
+  .slide-counter span { color: var(--accent); font-weight: 600; }
+
+  /* --- Print button --- */
+  .print-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: 8px;
+    background: var(--accent); color: #000;
+    font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif;
+    transition: all 0.2s; margin-top: 12px;
+  }
+  .print-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(245,158,11,0.3); }
+
+  /* --- Link list --- */
+  .link-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .link-list li {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; border-radius: 8px;
+    background: var(--bg3); border: 1px solid var(--border);
+    font-size: 13px; color: var(--fg); cursor: pointer;
+    transition: all 0.2s; text-decoration: none;
+  }
+  .link-list li:hover { border-color: var(--accent); background: var(--accent-glow); }
+  .link-list li i { color: var(--accent); font-size: 14px; width: 20px; text-align: center; }
+  .link-list li .link-desc { font-size: 11px; color: var(--fg-muted); margin-top: 2px; }
+
+  /* --- Branch icons --- */
+  .branch-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; margin-bottom: 12px;
+  }
+
+  /* --- Highlight --- */
+  .hl { color: var(--accent); font-weight: 600; }
+  .hl-blue { color: var(--blue); font-weight: 600; }
+  .hl-green { color: var(--green); font-weight: 600; }
+
+  /* --- Title slide special --- */
+  .title-slide-content {
+    flex: 1; display: flex; flex-direction: column;
+    justify-content: center; align-items: flex-start;
+    max-width: 800px;
+  }
+  .title-unit {
+    font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 3px; color: var(--accent); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .title-unit::before {
+    content: ''; width: 30px; height: 2px; background: var(--accent);
+  }
+  .title-main {
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 700; line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .title-main .accent-word {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .title-desc {
+    font-size: 17px; color: var(--fg-muted); line-height: 1.6;
+    max-width: 560px; margin-bottom: 28px;
+  }
+  .title-meta {
+    display: flex; gap: 24px; font-size: 12px; color: var(--fg-muted);
+  }
+  .title-meta span { display: flex; align-items: center; gap: 6px; }
+  .title-meta i { color: var(--accent); font-size: 11px; }
+
+  /* --- Floating shapes on title --- */
+  .title-shapes {
+    position: absolute; right: 60px; top: 50%; transform: translateY(-50%);
+    width: 320px; height: 320px; opacity: 0.15;
+  }
+  .shape-gear {
+    position: absolute; font-size: 120px; color: var(--accent);
+    animation: rotateSlow 30s linear infinite;
+    top: 0; right: 0;
+  }
+  .shape-wrench {
+    position: absolute; font-size: 80px; color: var(--blue);
+    animation: rotateSlow 20s linear infinite reverse;
+    bottom: 20px; left: 0;
+  }
+  @keyframes rotateSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  /* --- Session indicator --- */
+  .session-pills {
+    display: flex; gap: 8px; margin-bottom: 20px;
+  }
+  .session-pill {
+    font-size: 11px; font-weight: 600; padding: 4px 14px;
+    border-radius: 20px; border: 1px solid var(--border);
+    color: var(--fg-muted); background: transparent;
+  }
+  .session-pill.active {
+    background: var(--accent); color: #000; border-color: var(--accent);
+  }
+
+  /* --- Responsive --- */
+  @media (max-width: 900px) {
+    .slide { padding: 24px 20px; }
+    .card-grid-2, .card-grid-3, .card-grid-4 { grid-template-columns: 1fr; }
+    .process-steps { flex-wrap: wrap; gap: 16px; }
+    .process-line { display: none; }
+    .process-step { min-width: 80px; }
+    .title-shapes { display: none; }
+    .print-area .print-fields { grid-template-columns: 1fr; }
+    .compare-table { font-size: 12px; }
+    .compare-table th, .compare-table td { padding: 8px 12px; }
+  }
+
+  /* --- Print styles --- */
+  @media print {
+    body { background: #fff; }
+    .top-bar, .bottom-bar, .bg-grid, .bg-glow, .bg-glow-2,
+    .slide:not(.print-target), .teacher-note, .print-btn { display: none !important; }
+    .print-target {
+      position: static !important; opacity: 1 !important;
+      transform: none !important; pointer-events: all !important;
+      padding: 0 !important; overflow: visible !important;
+    }
+    .print-area { box-shadow: none; border: none; }
+  }
+
+  /* --- Keyframe for entrance --- */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .slide.active .anim-1 { animation: fadeInUp 0.5s 0.1s both; }
+  .slide.active .anim-2 { animation: fadeInUp 0.5s 0.2s both; }
+  .slide.active .anim-3 { animation: fadeInUp 0.5s 0.3s both; }
+  .slide.active .anim-4 { animation: fadeInUp 0.5s 0.4s both; }
+  .slide.active .anim-5 { animation: fadeInUp 0.5s 0.5s both; }
+  .slide.active .anim-6 { animation: fadeInUp 0.5s 0.6s both; }
+</style>
+</head>
+<body>
+
+<!-- Background atmosphere -->
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="bg-glow-2"></div>
+
+<!-- Top bar -->
+<header class="top-bar">
+  <div class="top-bar-left">
+    <div class="top-bar-logo">ED</div>
+    <div class="top-bar-title"><span>Unit 1</span> &mdash; What is Engineering?</div>
+  </div>
+  <div class="top-bar-right">
+    <div class="session-pills" style="margin-bottom:0;">
+      <span class="session-pill active">Session 1</span>
+      <span class="session-pill">Session 2</span>
+    </div>
+    <div class="top-bar-badge">5E Model</div>
+    <div class="timer-display">
+      <i class="fas fa-clock"></i>
+      <span id="timer">45:00</span>
+    </div>
+  </div>
+</header>
+
+<!-- Slides -->
+<main class="slides-wrapper">
+
+  <!-- SLIDE 0: Title -->
+  <section class="slide active" data-slide="0">
+    <div class="title-slide-content">
+      <div class="title-unit anim-1">Engineering Design &mdash; Unit 1</div>
+      <h1 class="title-main anim-2">What is <span class="accent-word">Engineering</span>?<br>& What is <span class="accent-word">Engineering Design</span>?</h1>
+      <p class="title-desc anim-3">Understanding the foundational concepts that define engineering as a discipline and the systematic, iterative process engineers use to solve real-world problems.</p>
+      <div class="title-meta anim-4">
+        <span><i class="fas fa-chalkboard-teacher"></i> AP Computer Science & Engineering Design</span>
+        <span><i class="fas fa-clock"></i> 2 x 45-minute sessions</span>
+        <span><i class="fas fa-layer-group"></i> 5E Lesson Plan</span>
+      </div>
+    </div>
+    <div class="title-shapes">
+      <i class="fas fa-gear shape-gear"></i>
+      <i class="fas fa-wrench shape-wrench"></i>
+    </div>
+  </section>
+
+  <!-- SLIDE 1: Lesson Objectives -->
+  <section class="slide" data-slide="1">
+    <div class="slide-phase phase-overview anim-1"><i class="fas fa-bullseye"></i> Lesson Overview</div>
+    <h2 class="slide-title anim-2">Lesson Objectives</h2>
+    <p class="slide-subtitle anim-2">By the end of these two sessions, students will be able to:</p>
+    <ul class="obj-list" style="max-width:750px;">
+      <li class="anim-3"><span class="num">1</span> Define <strong>engineering</strong> and distinguish it from pure science</li>
+      <li class="anim-4"><span class="num">2</span> Identify the major <strong>branches of engineering</strong> and give examples of their work</li>
+      <li class="anim-4"><span class="num">3</span> Define <strong>engineering design</strong> as a systematic, iterative problem-solving process</li>
+      <li class="anim-5"><span class="num">4</span> Describe each stage of the <strong>Engineering Design Process</strong> (EDP)</li>
+      <li class="anim-5"><span class="num">5</span> Differentiate between <strong>criteria</strong> and <strong>constraints</strong> in a design problem</li>
+      <li class="anim-6"><span class="num">6</span> Apply the EDP to a simple, real-world design scenario</li>
+    </ul>
+    <div class="teacher-note anim-6">
+      <i class="fas fa-lightbulb"></i>
+      <div><strong>Teacher Note:</strong> These objectives align with NGSS HS-ETS1-1 and HS-ETS1-2. If your state/district uses different standards, adjust the numbering accordingly. Objective 6 is the key application piece for Session 2.</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 2: Engage - Starter Activity -->
+  <section class="slide" data-slide="2">
+    <div class="slide-phase phase-engage anim-1"><i class="fas fa-play"></i> Engage</div>
+    <h2 class="slide-title anim-2">Starter Activity: "What Failed?"</h2>
+    <p class="slide-subtitle anim-2">Before we define engineering, let's look at what happens when engineering goes wrong &mdash; and what we can learn from it.</p>
+    <div style="display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start;">
+      <div class="anim-3">
+        <div class="video-placeholder" onclick="window.open('https://www.youtube.com/watch?v=H5JnHl3MCPo','_blank')">
+          <div class="play-icon"><i class="fas fa-play" style="margin-left:2px;"></i></div>
+          <div class="vid-title">Engineering Disasters: Lessons Learned</div>
+          <div class="vid-text">Click to open &mdash; YouTube (~5 min)</div>
+        </div>
+        <p style="font-size:11px; color:var(--fg-muted); margin-top:8px; max-width:640px;">
+          Alternative: Search "Top 10 Engineering Failures" on YouTube. Any 3-5 min compilation works.
+        </p>
+      </div>
+      <div style="flex:1; min-width:280px;" class="anim-4">
+        <div class="card" style="border-color:rgba(34,197,94,0.2);">
+          <div class="card-title" style="color:var(--green);"><i class="fas fa-comments" style="margin-right:8px;"></i>Think-Pair-Share (5 min)</div>
+          <div class="card-text" style="display:flex; flex-direction:column; gap:10px;">
+            <p><strong>Think (1 min):</strong> What do you think caused the failure in the video? Was it a design flaw, a material issue, or something else?</p>
+            <p><strong>Pair (2 min):</strong> Discuss with your partner. Can you think of a product or structure in your daily life that could have been designed better?</p>
+            <p><strong>Share (2 min):</strong> We'll hear 3-4 pairs share their thoughts with the class.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="teacher-note anim-5">
+      <i class="fas fa-lightbulb"></i>
+      <div><strong>Teacher Tip:</strong> Don't reveal the "right answer" yet. The goal is to spark curiosity. Students should start realizing that engineering isn't just building things &mdash; it's about anticipating what <em>could</em> go wrong. Collect their responses on the board for reference later.</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3: What is Engineering? -->
+  <section class="slide" data-slide="3">
+    <div class="slide-phase phase-explain anim-1"><i class="fas fa-book-open"></i> Explain</div>
+    <h2 class="slide-title anim-2">What is Engineering?</h2>
+    <div class="def-box anim-3" style="max-width:750px; margin-bottom:24px;">
+      <div class="label">Definition</div>
+      <p><strong>Engineering</strong> is the application of scientific and mathematical principles to design, build, maintain, and improve structures, machines, processes, and systems that solve real-world problems and meet human needs.</p>
+    </div>
+    <div class="card-grid card-grid-2 anim-4" style="max-width:800px;">
+      <div class="card">
+        <div class="card-icon" style="background:rgba(56,189,248,0.1); color:var(--blue);"><i class="fas fa-flask"></i></div>
+        <div class="card-title">Science Discovers</div>
+        <div class="card-text">Science seeks to <span class="hl-blue">understand the natural world</span> through observation and experimentation. It asks "What is true?" and "How does this work?"</div>
+      </div>
+      <div class="card">
+        <div class="card-icon" style="background:rgba(245,158,11,0.1); color:var(--accent);"><i class="fas fa-gear"></i></div>
+        <div class="card-title">Engineering Creates</div>
+        <div class="card-text">Engineering applies scientific knowledge to <span class="hl">create solutions</span> that don't exist in nature. It asks "How can we solve this problem?" and "What works best?"</div>
+      </div>
+    </div>
+    <p class="anim-5" style="font-size:14px; color:var(--fg-muted); margin-top:16px; max-width:750px; line-height:1.6;">
+      <strong>Key Insight:</strong> Scientists study the world as it is. Engineers change the world to what it could be. Both are essential &mdash; engineering <em>depends</em> on scientific knowledge, but science also depends on engineered tools (microscopes, telescopes, particle accelerators).
+    </p>
+    <div class="teacher-note anim-6">
+      <i class="fas fa-lightbulb"></i>
+      <div><strong>CS Connection:</strong> Ask students: "Is computer science a science or an engineering discipline?" Great discussion starter. CS has elements of both &mdash; theoretical CS is closer to math/science, while software engineering is clearly engineering.</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 4: Science vs Engineering Comparison -->
+  <section class="slide" data-slide="4">
+    <div class="slide-phase phase-explain anim-1"><i class="fas fa-book-open"></i> Explain</div>
+    <h2 class="slide-title anim-2">Science vs. Engineering: Side by Side</h2>
+    <p class="slide-subtitle anim-2">While deeply connected, science and engineering have fundamentally different goals, methods, and outputs.</p>
+    <div class="anim-3" style="max-width:800px; overflow-x:auto;">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th style="width:25%;">Aspect</th>
+            <th style="width:37.5%; color:var(--blue);"><i class="fas fa-flask" style="margin-right:6px;"></i>Science</th>
+            <th style="width:37.5%; color:var(--accent);"><i class="fas fa-gear" style="margin-right:6px;"></i>Engineering</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Goal</td><td>Understand natural phenomena</td><td>Solve practical problems</td></tr>
+          <tr><td>Method</td><td>Scientific method (observe, hypothesize, test)</td><td>Engineering design process (define, design, test, iterate)</td></tr>
+          <tr><td>Output</td><td>Theories, laws, knowledge</td><td>Products, systems, structures, processes</td></tr>
+          <tr><td>Criteria</td><td>Truth, accuracy, reproducibility</td><td>Functionality, cost, safety, efficiency</td></tr>
+          <tr><td>Constraints</td><td>Minimal (funding, ethics)</td><td>Significant (materials, budget, time, physics)</td></tr>
+          <tr><td>Failure</td><td>Leads to new hypotheses</td><td>Leads to redesign and improvement</td></tr>
+          <tr><td>Example</td><td>Discovering how electricity works</td><td>Designing a safer battery for phones</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="anim-4" style="margin-top:20px; padding:16px 20px; background:var(--bg3); border-radius:8px; max-width:800px; border-left:3px solid var(--accent);">
+      <p style="font-size:14px; color:var(--fg); line-height:1.6;">
+        <i class="fas fa-quote-left" style="color:var(--accent); margin-right:8px;"></i>
+        <em>"Scientists study the world as it is; engineers create the world that has never been."</em> &mdash; Theodore von K&aacute;rm&aacute;n, aerospace engineer
+      </p>
+    </div>
+  </section>
+
+  <!-- SLIDE 5: Branches of Engineering -->
+  <section class="slide" data-slide="5">
+    <div class="slide-phase phase-explain anim-1"><i class="fas fa-book-open"></i> Explain</div>
+    <h2 class="slide-title anim-2">Major Branches of Engineering</h2>
+    <p class="slide-subtitle anim-2">Engineering is a vast field with many specializations. Here are the primary branches students should know.</p>
+    <div class="card-grid card-grid-3 anim-3">
+      <div class="card">
+        <div class="branch-icon" style="background:rgba(245,158,11,0.1); color:var(--accent);"><i class="fas fa-bridge"></i></div>
+        <div class="card-title">Civil</div>
+        <div class="card-text">Designs and builds infrastructure: bridges, roads, dams, buildings, water systems. The oldest engineering discipline.</div>
+      </div>
+      <div class="card">
+        <div class="branch-icon" style="background:rgba(56,189,248,0.1); color:var(--blue);"><i class="fas fa-robot"></i></div>
+        <div class="card-title">Mechanical</div>
+        <div class="card-text">Deals with machines, engines, HVAC systems, manufacturing processes. Anything that moves or uses energy.</div>
+      </div>
+      <div class="card">
+        <div class="branch-icon" style="background:rgba(34,197,94,0.1); color:var(--green);"><i class="fas fa-bolt"></i></div>
+        <div class="card-title">Electrical</div>
+        <div class="card-text">Works with electricity, electronics, electromagnetism. From power grids to circuit boards to signal processing.</div>
+      </div>
+      <div class="card">
+        <div class="branch-icon" style="background:rgba(239,68,68,0.1); color:var(--red);"><i class="fas fa-vial"></i></div>
+        <div class="card-title">Chemical</div>
+        <div class="card-text">Transforms raw materials into useful products. Pharmaceuticals, plastics, fertilizers, food processing, fuel.</div>
+      </div>
+      <div class="card">
+        <div class="branch-icon" style="background:rgba(168,85,247,0.1); color:#a855f7;"><i class="fas fa-microchip"></i></div>
+        <div class="card-title">Computer / Software</div>
+        <div class="card-text">Designs software systems, algorithms, networks, and computing hardware. Your AP CS class lives here!</div>
+      </div>
+      <div class="card">
+        <div class="branch-icon" style="background:rgba(236,72,153,0.1); color:#ec4899;"><i class="fas fa-plane"></i></div>
+        <div class="card-title">Aerospace</div>
+        <div class="card-text">Aircraft, spacecraft, missiles, satellites. Combines mechanical, electrical, and materials engineering.</div>
+      </div>
+    </div>
+    <div class="teacher-note anim-4">
+      <i class="fas fa-lightbulb"></i>
+      <div><strong>Quick Activity:</strong> Ask students to name one product in the room and identify which type(s) of engineer contributed to it. A smartphone alone involves mechanical, electrical, chemical (battery), and software engineers.</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 6: What is Engineering Design? -->
+  <section class="slide" data-slide="6">
+    <div class="slide-phase phase-explain anim-1"><i class="fas fa-book-open"></i> Explain</div>
+    <h2 class="slide-title anim-2">What is Engineering Design?</h2>
+    <div class="def-box anim-3" style="max-width:780px; margin-bottom:24px;">
+      <div class="label">Definition</div>
+      <p><strong>Engineering Design</strong> is a <span class="hl">systematic, iterative process</span> that engineers use to identify problems, develop solutions within given constraints, test and evaluate those solutions, and refine them to produce the best possible outcome.</p>
+    </div>
+    <div class="card-grid card-grid-2 anim-4" style="max-width:800px;">
+      <div class="card">
+        <div class="card-title"><i class="fas fa-arrows-spin" style="color:var(--accent); margin-right:8px;"></i>Iterative, Not Linear</div>
+        <div class="card-text">Unlike a simple recipe, engineering design involves <span class="hl">going back to earlier steps</span> when tests reveal problems. A bridge design might fail wind tunnel tests, sending engineers back to the brainstorming phase. This cycle repeats until the solution meets all criteria.</div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fas fa-scale-balanced" style="color:var(--blue); margin-right:8px;"></i>Trade-offs Are Inevitable</div>
+        <div class="card-text">No design is perfect. Engineers constantly make <span class="hl-blue">trade-offs</span>: stronger materials cost more, lighter designs may be less durable, faster software may use more memory. Good engineering is about finding the <em>best balance</em>, not perfection.</div>
+      </div>
+    </div>
+    <p class="anim-5" style="font-size:14px; color:var(--fg-muted); margin-top:16px; max-width:780px; line-height:1.6;">
+      <strong>Important:</strong> Engineering design is NOT the same as "making something." It is a <em>methodical approach</em> with defined steps, documented decisions, and evidence-based evaluation. Artisans and craftspeople may make beautiful things, but engineering design adds rigor, repeatability, and optimization.
+    </p>
+  </section>
+
+  <!-- SLIDE 7: The Engineering Design Process -->
+  <section class="slide" data-slide="7">
+    <div class="slide-phase phase-explain anim-1"><i class="fas fa-book-open"></i> Explain</div>
+    <h2 class="slide-title anim-2">The Engineering Design Process</h2>
+    <p class="slide-subtitle anim-2">While different organizations use slightly different versions, the core steps are consistent. This is the version most commonly used in high school engineering courses.</p>
+    <div class="process-steps anim-3" style="margin: 24px 0;">
+      <div class="process-line"></div>
+      <div class="process-step">
+        <div class="step-circle">1</div>
+        <div class="step-label">Define Problem</div>
+        <div class="step-desc">Identify the need, user, and context</div>
+      </div>
+      <div class="process-step">
+        <div class="step-circle">2</div>
+        <div class="step-label">Research</div>
+        <div class="step-desc">Gather info, existing solutions</div>
+      </div>
+      <div class="process-step">
+        <div class="step-circle">3</div>
+        <div class="step-label">Brainstorm</div>
+        <div class="step-desc">Generate multiple ideas</div>
+      </div>
+      <div class="process-step">
+        <div class="step-circle">4</div>
+        <div class="step-label">Select & Plan</div>
+        <div class="step-desc">Choose best idea, make detailed plan</div>
+      </div>
+      <div class="process-step">
+        <div class="step-circle">5</div>
+        <div class="step-label">Prototype</div>
+        <div class="step-desc">Build a model or proof-of-concept</div>
+      </div>
+      <div class="process-step">
+        <div class="step-circle">6</div>
+        <div class="step-label">Test & Evaluate</div>
+        <div class="step-desc">Test against criteria, collect data</div>
+      </div>
+      <div class="process-step">
+        <div class="step-circle">7</div>
+        <div class="step-label">Iterate</div>
+        <div class="step-desc">Refine based on test results</div>
+      </div>
+      <div class="process-step">
+        <div class="step-circle">8</div>
+        <div class="step-label">Communicate</div>
+        <div class="step-desc">Share results, document process</div>
+      </div>
+    </div>
+    <div class="card anim-4" style="max-width:800px; border-color:rgba(245,158,11,0.2); background:rgba(245,158,11,0.03);">
+      <div class="card-text" style="display:flex; align-items:flex-start; gap:12px;">
+        <i class="fas fa-rotate-left" style="color:var(--accent); font-size:18px; margin-top:2px;"></i>
+        <div><strong style="color:var(--accent);">The Loop:</strong> Steps 5-7 form a loop. If the prototype fails tests (Step 6), you go back to brainstorming (Step 3), re-plan (Step 4), or rebuild (Step 5). This cycle continues until the solution satisfies all criteria and constraints. Many real products go through dozens of iterations.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 8: Criteria vs Constraints -->
+  <section class="slide" data-slide="8">
+    <div class="slide-phase phase-explain anim-1"><i class="fas fa-book-open"></i> Explain</div>
+    <h2 class="slide-title anim-2">Criteria vs. Constraints</h2>
+    <p class="slide-subtitle anim-2">These two terms are foundational to engineering design. Students often confuse them &mdash; here's how to keep them straight.</p>
+    <div class="card-grid card-grid-2 anim-3" style="max-width:820px;">
+      <div class="card" style="border-top: 3px solid var(--green);">
+        <div class="card-title" style="color:var(--green); font-size:18px;"><i class="fas fa-check-circle" style="margin-right:8px;"></i>Criteria</div>
+        <div class="card-text" style="margin-bottom:12px;"><span class="hl-green">What the solution MUST achieve.</span> These are the desirable features and performance targets that define a successful design.</div>
+        <div style="font-size:13px; color:var(--fg); line-height:1.7;">
+          <p><strong>Examples for a backpack:</strong></p>
+          <ul style="padding-left:18px; margin-top:6px;">
+            <li>Can hold at least 30L of volume</li>
+            <li>Water-resistant material</li>
+            <li>Has a padded laptop compartment</li>
+            <li>Weighs less than 1.5 kg when empty</li>
+            <li>Comfortable to wear for 2+ hours</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--red);">
+        <div class="card-title" style="color:var(--red); font-size:18px;"><i class="fas fa-ban" style="margin-right:8px;"></i>Constraints</div>
+        <div class="card-text" style="margin-bottom:12px;"><span style="color:var(--red); font-weight:600;">What the solution CANNOT violate.</span> These are the limitations &mdash; things you cannot change or must work within.</div>
+        <div style="font-size:13px; color:var(--fg); line-height:1.7;">
+          <p><strong>Examples for a backpack:</strong></p>
+          <ul style="padding-left:18px; margin-top:6px;">
+            <li>Budget: maximum $40 to manufacture</li>
+            <li>Must use commercially available fabrics</li>
+            <li>Cannot use toxic dyes or materials</li>
+            <li>Must be completed within 3 weeks</li>
+            <li>Must comply with safety regulations</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="anim-4" style="margin-top:16px; padding:14px 18px; background:var(--bg3); border-radius:8px; max-width:820px; font-size:13px; color:var(--fg-muted); line-height:1.6;">
+      <i class="fas fa-memory-tip" style="color:var(--accent); margin-right:6px;"></i>
+      <strong>Mnemonic:</strong> <span class="hl">C</span>riteria = <span class="hl">C</span>heckmarks (goals to hit) &nbsp;|&nbsp; <span style="color:var(--red); font-weight:600;">C</span>onstraints = <span style="color:var(--red); font-weight:600;">C</span>eiling/walls (limits you can't break)
+    </div>
+  </section>
+
+  <!-- SLIDE 9: Real-World Example -->
+  <section class="slide" data-slide="9">
+    <div class="slide-phase phase-explain anim-1"><i class="fas fa-book-open"></i> Explain</div>
+    <h2 class="slide-title anim-2">Real-World Example: Designing a Water Filter</h2>
+    <p class="slide-subtitle anim-2">Let's walk through how the EDP applies to a real problem millions of people face.</p>
+    <div class="anim-3" style="max-width:820px;">
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div class="card" style="padding:16px 20px; display:flex; gap:14px; align-items:flex-start;">
+          <div style="flex-shrink:0; width:32px; height:32px; border-radius:8px; background:rgba(245,158,11,0.15); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">1</div>
+          <div><strong>Define Problem:</strong> Rural communities need an affordable, portable water filter that removes bacteria and sediment from untreated water sources.</div>
+        </div>
+        <div class="card" style="padding:16px 20px; display:flex; gap:14px; align-items:flex-start;">
+          <div style="flex-shrink:0; width:32px; height:32px; border-radius:8px; background:rgba(245,158,11,0.15); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">2</div>
+          <div><strong>Research:</strong> Study existing filters (ceramic, carbon, UV, reverse osmosis). Learn about local water contaminants, available materials, and community needs.</div>
+        </div>
+        <div class="card" style="padding:16px 20px; display:flex; gap:14px; align-items:flex-start;">
+          <div style="flex-shrink:0; width:32px; height:32px; border-radius:8px; background:rgba(245,158,11,0.15); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">3</div>
+          <div><strong>Brainstorm:</strong> Multi-layer sand filter, ceramic pot filter, solar disinfection bottle, biosand filter with local materials&hellip;</div>
+        </div>
+        <div class="card" style="padding:16px 20px; display:flex; gap:14px; align-items:flex-start;">
+          <div style="flex-shrink:0; width:32px; height:32px; border-radius:8px; background:rgba(245,158,11,0.15); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">4</div>
+          <div><strong>Select & Plan:</strong> Choose biosand filter. Plan dimensions, layer materials (gravel, coarse sand, fine sand), and flow rate calculations.</div>
+        </div>
+        <div class="card" style="padding:16px 20px; display:flex; gap:14px; align-items:flex-start;">
+          <div style="flex-shrink:0; width:32px; height:32px; border-radius:8px; background:rgba(245,158,11,0.15); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">5-7</div>
+          <div><strong>Prototype, Test, Iterate:</strong> Build small-scale model. Test flow rate and water purity. First version flows too slowly &mdash; adjust sand grain size. Second version passes bacteria &mdash; success! But community finds it too heavy &mdash; iterate again with lighter container.</div>
+        </div>
+        <div class="card" style="padding:16px 20px; display:flex; gap:14px; align-items:flex-start;">
+          <div style="flex-shrink:0; width:32px; height:32px; border-radius:8px; background:rgba(245,158,11,0.15); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">8</div>
+          <div><strong>Communicate:</strong> Publish design guide, train community members to build and maintain their own filters, share data with NGOs.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 10: Session 1 Recap / Transition -->
+  <section class="slide" data-slide="10">
+    <div class="slide-phase phase-overview anim-1"><i class="fas fa-flag-checkered"></i> Session 1 Wrap-Up</div>
+    <h2 class="slide-title anim-2">Session 1 Recap</h2>
+    <p class="slide-subtitle anim-2">Before we move to application, let's consolidate what we've covered.</p>
+    <div class="card-grid card-grid-2 anim-3" style="max-width:800px;">
+      <div class="card">
+        <div class="card-title" style="color:var(--accent);"><i class="fas fa-check" style="margin-right:8px;"></i>What We Learned</div>
+        <div class="card-text">
+          <ul style="padding-left:16px; display:flex; flex-direction:column; gap:6px;">
+            <li>Engineering applies science to solve problems</li>
+            <li>Science vs. Engineering: understand vs. create</li>
+            <li>6 major branches of engineering</li>
+            <li>Engineering Design = systematic, iterative process</li>
+            <li>The 8-step Engineering Design Process</li>
+            <li>Criteria (goals) vs. Constraints (limits)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color:var(--blue);"><i class="fas fa-arrow-right" style="margin-right:8px;"></i>Coming in Session 2</div>
+        <div class="card-text">
+          <ul style="padding-left:16px; display:flex; flex-direction:column; gap:6px;">
+            <li>Apply the EDP to a mini design challenge</li>
+            <li>Practice identifying criteria and constraints</li>
+            <li>Worksheet: Analyze a design scenario</li>
+            <li>Exit ticket assessment</li>
+            <li>Homework assignment distributed</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="teacher-note anim-4">
+      <i class="fas fa-lightbulb"></i>
+      <div><strong>Transition Tip:</strong> If you have 2-3 minutes left, do a rapid-fire Q&A: "Name a branch of engineering" / "What's the difference between criteria and constraints?" / "Why is the EDP iterative?" This primes them for Session 2.</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 11: Extend - Mini Design Challenge -->
+  <section class="slide" data-slide="11">
+    <div class="slide-phase phase-extend anim-1"><i class="fas fa-rocket"></i> Extend &mdash; Session 2</div>
+    <h2 class="slide-title anim-2">Mini Design Challenge</h2>
+    <p class="slide-subtitle anim-2">Apply what you've learned. You have 15 minutes for this activity.</p>
+    <div class="card anim-3" style="max-width:800px; border-color:rgba(245,158,11,0.25); background:rgba(245,158,11,0.03);">
+      <div class="card-title" style="font-size:18px;"><i class="fas fa-pencil-ruler" style="color:var(--accent); margin-right:8px;"></i>The Challenge: "Better Desk Organizer"</div>
+      <div class="card-text" style="line-height:1.7;">
+        <p style="margin-bottom:10px;">Your school's desks are cluttered with pens, phones, calculators, and cables. Design a <strong>desk organizer</strong> that solves this problem.</p>
+        <p><strong>Criteria:</strong></p>
+        <ul style="padding-left:18px; margin:6px 0 12px;">
+          <li>Holds at least 5 pens/pencils</li>
+          <li>Has a slot for a phone (up to 6.5" screen)</li>
+          <li>Includes cable management (at least 1 cable)</li>
+          <li>Non-slip base</li>
+        </ul>
+        <p><strong>Constraints:</strong></p>
+        <ul style="padding-left:18px; margin:6px 0;">
+          <li>Must fit within 20cm x 15cm footprint</li>
+          <li>Maximum $5 material cost per unit</li>
+          <li>Must be producible with cardboard, foam board, or 3D printing</li>
+          <li>Must be completed in class today (sketch only)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="anim-4" style="margin-top:16px; max-width:800px;">
+      <p style="font-size:14px; font-weight:600; margin-bottom:10px;">Your Deliverable (per pair):</p>
+      <ol style="padding-left:18px; font-size:13.5px; color:var(--fg-muted); line-height:1.8;">
+        <li>A <strong>labeled sketch</strong> of your design (top view + side view)</li>
+        <li>A list of <strong>3 design decisions</strong> you made and WHY</li>
+        <li>One <strong>trade-off</strong> you accepted and your reasoning</li>
+      </ol>
+    </div>
+    <div class="teacher-note anim-5">
+      <i class="fas fa-lightbulb"></i>
+      <div><strong>Teacher Tip:</strong> Walk around during this activity. Look for students who skip the brainstorming step and go straight to one idea. Remind them: "Engineers don't pick the first idea. What are 3-4 alternatives?" Also check that they can articulate trade-offs.</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 12: Extend - Worksheet -->
+  <section class="slide" data-slide="12">
+    <div class="slide-phase phase-extend anim-1"><i class="fas fa-rocket"></i> Extend</div>
+    <h2 class="slide-title anim-2">Worksheet: Analyze a Design Scenario</h2>
+    <p class="slide-subtitle anim-2">Complete individually. This will be collected and graded.</p>
+    <div style="max-width:800px;">
+      <div class="ws-item anim-3">
+        <div class="ws-q">
+          <span class="q-num">1</span>
+          <span>A city wants to build a new pedestrian bridge over a busy highway. List <strong>at least 4 criteria</strong> and <strong>at least 4 constraints</strong> the engineers would need to consider.</span>
+        </div>
+        <div class="ws-lines">
+          <div class="ws-line"></div>
+          <div class="ws-line"></div>
+          <div class="ws-line"></div>
+          <div class="ws-line"></div>
+          <div class="ws-line"></div>
+          <div class="ws-line"></div>
+        </div>
+      </div>
+      <div class="ws-item anim-4">
+        <div class="ws-q">
+          <span class="q-num">2</span>
+          <span>Explain in 2-3 sentences why the Engineering Design Process is described as <strong>"iterative"</strong> rather than "linear." Give a specific example.</span>
+        </div>
+        <div class="ws-lines">
+          <div class="ws-line"></div>
+          <div class="ws-line"></div>
+          <div class="ws-line"></div>
+        </div>
+      </div>
+      <div class="ws-item anim-5">
+        <div class="ws-q">
+          <span class="q-num">3</span>
+          <span>A software engineer is designing a new mobile app. Identify which branch(es) of engineering are involved and explain how the <strong>Engineering Design Process</strong> applies to software (not just physical products).</span>
+        </div>
+        <div class="ws-lines">
+          <div class="ws-line"></div>
+          <div class="ws-line"></div>
+          <div class="ws-line"></div>
+          <div class="ws-line"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 13: Evaluate - Exit Ticket -->
+  <section class="slide" data-slide="13">
+    <div class="slide-phase phase-evaluate anim-1"><i class="fas fa-clipboard-check"></i> Evaluate</div>
+    <h2 class="slide-title anim-2">Exit Ticket</h2>
+    <p class="slide-subtitle anim-2">Complete before you leave. This counts as a formative assessment grade.</p>
+    <div class="exit-ticket-box anim-3" style="max-width:750px;">
+      <p style="font-size:12px; font-weight:600; color:var(--red); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px;">
+        <i class="fas fa-user" style="margin-right:6px;"></i> Name: _______________________ &nbsp;&nbsp; Date: _____________
+      </p>
+      <div style="display:flex; flex-direction:column; gap:18px;">
+        <div>
+          <p style="font-size:14px; font-weight:600; margin-bottom:6px;">Q1. In one sentence, define engineering.</p>
+          <div style="border-bottom:1px solid rgba(239,68,68,0.3); height:24px;"></div>
+        </div>
+        <div>
+          <p style="font-size:14px; font-weight:600; margin-bottom:6px;">Q2. What is the KEY difference between science and engineering? (1 sentence)</p>
+          <div style="border-bottom:1px solid rgba(239,68,68,0.3); height:24px;"></div>
+        </div>
+        <div>
+          <p style="font-size:14px; font-weight:600; margin-bottom:6px;">Q3. Name the 8 steps of the Engineering Design Process in order.</p>
+          <div style="border-bottom:1px solid rgba(239,68,68,0.3); height:24px;"></div>
+          <div style="border-bottom:1px solid rgba(239,68,68,0.3); height:24px; margin-top:10px;"></div>
+        </div>
+        <div>
+          <p style="font-size:14px; font-weight:600; margin-bottom:6px;">Q4. "A phone case must cost less than $15 to manufacture." Is this a criterion or a constraint? Explain in one sentence.</p>
+          <div style="border-bottom:1px solid rgba(239,68,68,0.3); height:24px;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="teacher-note anim-4">
+      <i class="fas fa-lightbulb"></i>
+      <div><strong>Grading:</strong> This should take 5-7 minutes. Q1-Q2 are worth 2 points each (accuracy). Q3 is worth 4 points (all 8 in order). Q4 is worth 2 points (correct identification + reasoning). Total: 10 points. See Mark Scheme slide for detailed answers.</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 14: Homework -->
+  <section class="slide" data-slide="14">
+    <div class="slide-phase phase-overview anim-1"><i class="fas fa-home"></i> Homework</div>
+    <h2 class="slide-title anim-2">Homework Assignment</h2>
+    <p class="slide-subtitle anim-2">Due next class. Print this page and complete it on paper.</p>
+    <div class="print-area anim-3" id="homeworkPrintArea">
+      <h2>Engineering Design &mdash; Unit 1 Homework</h2>
+      <div class="print-sub">Name: _________________________ &nbsp;&nbsp; Class: _________ &nbsp;&nbsp; Date: ___________</div>
+
+      <div class="print-section">
+        <p style="font-size:12px; font-weight:600; margin-bottom:10px; color:#333;">PART A: Multiple Choice (2 points each = 10 points)</p>
+        <div style="display:flex; flex-direction:column; gap:14px; font-size:12.5px; line-height:1.6; color:#222;">
+          <div>
+            <p><strong>1.</strong> Which of the following best describes engineering?</p>
+            <p style="padding-left:16px;">A) The study of natural phenomena through observation<br>
+            B) The application of scientific and mathematical principles to solve problems<br>
+            C) The creation of art and aesthetic designs<br>
+            D) The management of business operations</p>
+            <p style="margin-top:4px;">Answer: _____</p>
+          </div>
+          <div>
+            <p><strong>2.</strong> Which step of the Engineering Design Process comes immediately after "Brainstorm"?</p>
+            <p style="padding-left:16px;">A) Prototype &nbsp;&nbsp; B) Test & Evaluate &nbsp;&nbsp; C) Select and Plan &nbsp;&nbsp; D) Research</p>
+            <p style="margin-top:4px;">Answer: _____</p>
+          </div>
+          <div>
+            <p><strong>3.</strong> "The bridge must be able to support vehicles weighing up to 20 tons." This is an example of:</p>
+            <p style="padding-left:16px;">A) A constraint &nbsp;&nbsp; B) A criterion &nbsp;&nbsp; C) A trade-off &nbsp;&nbsp; D) An iteration</p>
+            <p style="margin-top:4px;">Answer: _____</p>
+          </div>
+          <div>
+            <p><strong>4.</strong> Why is the Engineering Design Process called "iterative"?</p>
+            <p style="padding-left:16px;">A) Because it always takes exactly one attempt to succeed<br>
+            B) Because engineers repeat and refine steps based on testing results<br>
+            C) Because it only moves forward in a straight line<br>
+            D) Because it involves working with integers</p>
+            <p style="margin-top:4px;">Answer: _____</p>
+          </div>
+          <div>
+            <p><strong>5.</strong> Which branch of engineering would be MOST involved in designing a smartphone's processor chip?</p>
+            <p style="padding-left:16px;">A) Civil Engineering &nbsp;&nbsp; B) Chemical Engineering &nbsp;&nbsp; C) Computer/Electrical Engineering &nbsp;&nbsp; D) Aerospace Engineering</p>
+            <p style="margin-top:4px;">Answer: _____</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="print-section">
+        <p style="font-size:12px; font-weight:600; margin-bottom:10px; color:#333;">PART B: Short Answer (5 points each = 20 points)</p>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div>
+            <div class="print-q"><span class="pq">6</span><span>Explain the difference between a criterion and a constraint. Give one example of each from a real product you use daily.</span></div>
+            <div class="print-lines">
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+            </div>
+          </div>
+          <div>
+            <div class="print-q"><span class="pq">7</span><span>A team of engineers is designing an electric scooter. They want it to go 30 mph (criterion) but the battery only allows 20 mph (constraint). Describe TWO different strategies the engineers could use to address this trade-off.</span></div>
+            <div class="print-lines">
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+            </div>
+          </div>
+          <div>
+            <div class="print-q"><span class="pq">8</span><span>Choose any everyday object (e.g., a chair, a water bottle, headphones). Identify which branches of engineering were involved in its design and manufacturing. Explain your reasoning for each branch you list.</span></div>
+            <div class="print-lines">
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+            </div>
+          </div>
+          <div>
+            <div class="print-q"><span class="pq">9</span><span>Some people say "engineering is just applied science." Do you agree or disagree? Write a paragraph (4-6 sentences) defending your position using specific examples from this lesson.</span></div>
+            <div class="print-lines">
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+              <div class="print-line"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="print-note">
+        <strong>Total: 30 points</strong> &nbsp;|&nbsp; Part A: 10 pts &nbsp;|&nbsp; Part B: 20 pts &nbsp;|&nbsp; Due: Next class session
+      </div>
+    </div>
+    <button class="print-btn anim-4" onclick="printHomework()">
+      <i class="fas fa-print"></i> Print Homework Sheet
+    </button>
+    <div class="teacher-note anim-5">
+      <i class="fas fa-lightbulb"></i>
+      <div><strong>Google Docs Tip:</strong> Select the white homework area, copy it, and paste into a new Google Doc. The formatting should transfer well. Adjust margins to "Narrow" for best fit. Alternatively, use the Print button above and "Save as PDF" then upload to Google Classroom.</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 15: Mark Scheme -->
+  <section class="slide" data-slide="15">
+    <div class="slide-phase phase-overview anim-1"><i class="fas fa-key"></i> Mark Scheme</div>
+    <h2 class="slide-title anim-2">Homework Mark Scheme</h2>
+    <p class="slide-subtitle anim-2">Total: 30 points. Use this for consistent grading.</p>
+    <div style="max-width:800px;">
+      <p style="font-size:13px; font-weight:600; color:var(--accent); margin-bottom:10px;" class="anim-3">PART A: Multiple Choice (2 pts each)</p>
+      <div class="anim-3" style="display:grid; grid-template-columns:1fr 1fr; gap:6px 20px; margin-bottom:20px; font-size:13px;">
+        <span>1. <strong style="color:var(--green);">B</strong></span>
+        <span>2. <strong style="color:var(--green);">C</strong></span>
+        <span>3. <strong style="color:var(--green);">B</strong></span>
+        <span>4. <strong style="color:var(--green);">B</strong></span>
+        <span>5. <strong style="color:var(--green);">C</strong></span>
+      </div>
+
+      <p style="font-size:13px; font-weight:600; color:var(--accent); margin-bottom:10px;" class="anim-4">PART B: Short Answer</p>
+
+      <div class="ms-item anim-4">
+        <div class="ms-q">Q6. Criterion vs. Constraint with example (5 pts)</div>
+        <div class="ms-ans">
+          <strong>2 pts</strong> &mdash; Correct definition: Criteria are goals/features the solution must achieve; constraints are limitations it must work within.<br>
+          <strong>1.5 pts</strong> &mdash; Valid real-world criterion example (e.g., "phone must have 12-hour battery life").<br>
+          <strong>1.5 pts</strong> &mdash; Valid real-world constraint example (e.g., "phone must cost under $500").
+        </div>
+      </div>
+
+      <div class="ms-item anim-5">
+        <div class="ms-q">Q7. Electric scooter trade-off strategies (5 pts)</div>
+        <div class="ms-ans">
+          Accept any two reasonable strategies, e.g.: (1) Use a lighter frame material to reduce weight, allowing the same battery to achieve higher speed (2 pts); (2) Increase battery capacity by using newer/different battery chemistry, accepting higher cost or weight as a trade-off (2 pts); (3) Optimize motor efficiency through better gearing or controller software (1 pt for partial). <strong>1 pt</strong> for coherent explanation of WHY each strategy helps.
+        </div>
+      </div>
+
+      <div class="ms-item anim-5">
+        <div class="ms-q">Q8. Branches of engineering for an everyday object (5 pts)</div>
+        <div class="ms-ans">
+          <strong>Full marks (5 pts):</strong> Identifies 2+ relevant branches AND explains reasoning for each. E.g., for headphones: Electrical (wiring, drivers), Mechanical (hinge design, headband), Materials (ear cushion materials), Software (noise cancellation algorithm). <strong>3 pts:</strong> Correct branches but weak/no reasoning. <strong>1-2 pts:</strong> Only one branch or incorrect identification.
+        </div>
+      </div>
+
+      <div class="ms-item anim-6">
+        <div class="ms-q">Q9. "Engineering is just applied science" &mdash; agree/disagree (5 pts)</div>
+        <div class="ms-ans">
+          <strong>5 pts (excellent):</strong> Clear position with 2+ specific examples, shows understanding that engineering has its own methodology (EDP), deals with trade-offs/constraints that science doesn't, and involves creativity beyond just "applying" knowledge.<br>
+          <strong>3-4 pts (good):</strong> Clear position with 1 example, mostly accurate reasoning but may lack depth.<br>
+          <strong>1-2 pts (limited):</strong> Position unclear, no specific examples, or demonstrates misunderstanding of key concepts.<br>
+          <strong>0 pts:</strong> No attempt or completely off-topic.<br>
+          <em>Note: Both "agree" and "disagree" positions can earn full marks if well-argued. The "disagree" position is easier to defend, but a nuanced "agree with caveats" can also score well.</em>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 16: Exit Ticket Mark Scheme -->
+  <section class="slide" data-slide="16">
+    <div class="slide-phase phase-overview anim-1"><i class="fas fa-key"></i> Mark Scheme</div>
+    <h2 class="slide-title anim-2">Exit Ticket Mark Scheme</h2>
+    <p class="slide-subtitle anim-2">Total: 10 points. Quick-reference for grading.</p>
+    <div style="max-width:750px;">
+      <div class="ms-item anim-3">
+        <div class="ms-q">Q1. Define engineering (2 pts)</div>
+        <div class="ms-ans">
+          <strong>2 pts:</strong> Mentions applying scientific/mathematical principles to solve problems or design solutions.<br>
+          <strong>1 pt:</strong> Vague but shows general understanding (e.g., "building things" or "using science").<br>
+          <strong>0 pts:</strong> Incorrect or no answer.
+        </div>
+      </div>
+      <div class="ms-item anim-4">
+        <div class="ms-q">Q2. Key difference between science and engineering (2 pts)</div>
+        <div class="ms-ans">
+          <strong>2 pts:</strong> Clearly contrasts understanding/discovering (science) with creating/solving (engineering).<br>
+          <strong>1 pt:</strong> Partially correct but imprecise.<br>
+          <strong>0 pts:</strong> Incorrect or no answer.
+        </div>
+      </div>
+      <div class="ms-item anim-5">
+        <div class="ms-q">Q3. Name the 8 EDP steps in order (4 pts)</div>
+        <div class="ms-ans">
+          <strong>4 pts:</strong> All 8 correct and in order: Define Problem, Research, Brainstorm, Select & Plan, Prototype, Test & Evaluate, Iterate, Communicate.<br>
+          <strong>3 pts:</strong> All 8 listed but 1-2 out of order.<br>
+          <strong>2 pts:</strong> 6-7 correct.<br>
+          <strong>1 pt:</strong> 4-5 correct.<br>
+          <strong>0 pts:</strong> Fewer than 4.
+        </div>
+        <div class="ms-points">Accept reasonable synonyms: "Identify Problem" for "Define Problem," "Improve" for "Iterate," "Share Results" for "Communicate," etc.</div>
+      </div>
+      <div class="ms-item anim-6">
+        <div class="ms-q">Q4. Criterion or constraint? (2 pts)</div>
+        <div class="ms-ans">
+          <strong>1 pt:</strong> Correctly identifies it as a <strong>constraint</strong> (it's a limitation/cost cap, not a performance goal).<br>
+          <strong>1 pt:</strong> Correct reasoning (e.g., "It's a limit on cost, not something the case must achieve/do").
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 17: References & Resources -->
+  <section class="slide" data-slide="17">
+    <div class="slide-phase phase-overview anim-1"><i class="fas fa-link"></i> References & Resources</div>
+    <h2 class="slide-title anim-2">Additional Resources</h2>
+    <p class="slide-subtitle anim-2">Videos, websites, and readings to extend learning beyond the classroom.</p>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; max-width:860px;" class="anim-3">
+      <div>
+        <p style="font-size:12px; font-weight:600; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Videos</p>
+        <ul class="link-list">
+          <li onclick="window.open('https://www.youtube.com/watch?v=H5JnHl3MCPo','_blank')">
+            <i class="fab fa-youtube"></i>
+            <div>Engineering Disasters Compilation<div class="link-desc">~5 min &mdash; Engage starter video</div></div>
+          </li>
+          <li onclick="window.open('https://www.youtube.com/watch?v=tQvPGyS7YAk','_blank')">
+            <i class="fab fa-youtube"></i>
+            <div>The Engineering Design Process<div class="link-desc">SciShow &mdash; 6 min overview</div></div>
+          </li>
+          <li onclick="window.open('https://www.youtube.com/watch?v=_e7lJWRBnKE','_blank')">
+            <i class="fab fa-youtube"></i>
+            <div>What is Engineering?<div class="link-desc">EngineerGuy &mdash; clear, concise intro</div></div>
+          </li>
+          <li onclick="window.open('https://www.youtube.com/watch?v=3MaK3GqjJnE','_blank')">
+            <i class="fab fa-youtube"></i>
+            <div>Crash Course: Engineering<div class="link-desc">CrashCourse &mdash; excellent for flipped learning</div></div>
+          </li>
+        </ul>
+      </div>
+      <div>
+        <p style="font-size:12px; font-weight:600; color:var(--blue); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Websites & Readings</p>
+        <ul class="link-list">
+          <li onclick="window.open('https://www.tryengineering.org/','_blank')">
+            <i class="fas fa-globe"></i>
+            <div>TryEngineering.org<div class="link-desc">IEEE &mdash; lesson plans, games, career info</div></div>
+          </li>
+          <li onclick="window.open('https://www.eie.org/','_blank')">
+            <i class="fas fa-globe"></i>
+            <div>Engineering is Elementary<div class="link-desc">Museum of Science, Boston &mdash; great resources</div></div>
+          </li>
+          <li onclick="window.open('https://www.ngss.nsta.org/','_blank')">
+            <i class="fas fa-globe"></i>
+            <div>NGSS Standards<div class="link-desc">HS-ETS1 standards for engineering design</div></div>
+          </li>
+          <li onclick="window.open('https://www.engineergirl.org/','_blank')">
+            <i class="fas fa-globe"></i>
+            <div>EngineerGirl<div class="link-desc">NAE &mdash; student-friendly engineering content</div></div>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="anim-4" style="margin-top:24px; max-width:860px;">
+      <p style="font-size:12px; font-weight:600; color:var(--green); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">Curriculum References</p>
+      <div style="font-size:13px; color:var(--fg-muted); line-height:1.8;">
+        <p>&bull; NGSS HS-ETS1-1: Analyze a major global challenge to specify qualitative and quantitative criteria and constraints for solutions.</p>
+        <p>&bull; NGSS HS-ETS1-2: Design a solution to a complex real-world problem by breaking it down into smaller, more manageable problems.</p>
+        <p>&bull; ITEEA Standards for Technological and Engineering Literacy (STEL), Standard 3: Understanding the Relationships Among Technologies and the Connections Between Technology and Other Fields.</p>
+      </div>
+    </div>
+    <div class="teacher-note anim-5">
+      <i class="fas fa-lightbulb"></i>
+      <div><strong>For Your Prep:</strong> As a CS teacher, you'll find strong connections between the EDP and Agile/Software Development Life Cycle. The "iterate" step maps directly to sprint cycles. Use this analogy if students are struggling to grasp iteration &mdash; they likely already understand it from a coding context.</div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Bottom navigation bar -->
+<nav class="bottom-bar">
+  <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)" disabled>
+    <i class="fas fa-chevron-left"></i>
+  </button>
+  <div class="slide-dots" id="slideDots"></div>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <div class="slide-counter"><span id="currentNum">1</span> / <span id="totalNum">18</span></div>
+    <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+  </div>
+</nav>
+
+<!-- Toast notification -->
+<div id="toast" style="position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--card); border:1px solid var(--border); padding:10px 20px; border-radius:8px; font-size:13px; color:var(--fg); opacity:0; transition:all 0.3s; z-index:200; pointer-events:none; white-space:nowrap;"></div>
+
+<script>
+  // --- Slide navigation logic ---
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentSlide = 0;
+  let isTransitioning = false;
+
+  document.getElementById('totalNum').textContent = totalSlides;
+
+  // Build dot indicators
+  const dotsContainer = document.getElementById('slideDots');
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'slide-dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goToSlide(i);
+    dotsContainer.appendChild(dot);
+  }
+
+  function changeSlide(direction) {
+    const next = currentSlide + direction;
+    if (next < 0 || next >= totalSlides || isTransitioning) return;
+    goToSlide(next);
+  }
+
+  function goToSlide(index) {
+    if (index === currentSlide || isTransitioning) return;
+    isTransitioning = true;
+
+    const oldSlide = slides[currentSlide];
+    const newSlide = slides[index];
+    const goingForward = index > currentSlide;
+
+    // Remove active from old
+    oldSlide.classList.remove('active');
+    oldSlide.classList.add(goingForward ? 'exit-left' : '');
+    if (!goingForward) {
+      oldSlide.style.transform = 'translateX(60px)';
+      oldSlide.style.opacity = '0';
+    }
+
+    // Prepare new slide entry
+    newSlide.style.transition = 'none';
+    newSlide.style.transform = goingForward ? 'translateX(60px)' : 'translateX(-60px)';
+    newSlide.style.opacity = '0';
+
+    // Force reflow
+    void newSlide.offsetWidth;
+
+    newSlide.style.transition = '';
+    newSlide.classList.add('active');
+    newSlide.classList.remove('exit-left');
+    newSlide.style.transform = '';
+    newSlide.style.opacity = '';
+
+    // Reset old slide after transition
+    setTimeout(() => {
+      oldSlide.classList.remove('exit-left');
+      oldSlide.style.transform = '';
+      oldSlide.style.opacity = '';
+      isTransitioning = false;
+    }, 500);
+
+    currentSlide = index;
+    updateUI();
+  }
+
+  function updateUI() {
+    // Update dots
+    const dots = dotsContainer.querySelectorAll('.slide-dot');
+    dots.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+
+    // Update counter
+    document.getElementById('currentNum').textContent = currentSlide + 1;
+
+    // Update nav buttons
+    document.getElementById('prevBtn').disabled = currentSlide === 0;
+    document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+
+    // Update session pills
+    const pills = document.querySelectorAll('.session-pill');
+    // Session 1: slides 0-10, Session 2: slides 11-17
+    pills[0].classList.toggle('active', currentSlide <= 10);
+    pills[1].classList.toggle('active', currentSlide > 10);
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      changeSlide(1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      changeSlide(-1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      goToSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      goToSlide(totalSlides - 1);
+    }
+  });
+
+  // Touch/swipe support
+  let touchStartX = 0;
+  let touchStartY = 0;
+  document.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].screenX - touchStartX;
+    const dy = e.changedTouches[0].screenY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      changeSlide(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+
+  // --- Timer ---
+  let timerSeconds = 45 * 60;
+  let timerRunning = false;
+  const timerEl = document.getElementById('timer');
+
+  function formatTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+  }
+
+  function toggleTimer() {
+    timerRunning = !timerRunning;
+    showToast(timerRunning ? 'Timer started' : 'Timer paused');
+  }
+
+  // Click timer to toggle
+  timerEl.style.cursor = 'pointer';
+  timerEl.addEventListener('click', toggleTimer);
+
+  // Double-click to reset
+  timerEl.addEventListener('dblclick', () => {
+    timerSeconds = 45 * 60;
+    timerRunning = false;
+    timerEl.textContent = formatTime(timerSeconds);
+    timerEl.style.color = 'var(--fg-muted)';
+    showToast('Timer reset to 45:00');
+  });
+
+  setInterval(() => {
+    if (!timerRunning || timerSeconds <= 0) return;
+    timerSeconds--;
+    timerEl.textContent = formatTime(timerSeconds);
+    // Flash warning when under 5 minutes
+    if (timerSeconds <= 300 && timerSeconds > 0) {
+      timerEl.style.color = timerSeconds % 2 === 0 ? 'var(--red)' : 'var(--fg-muted)';
+    }
+    if (timerSeconds === 0) {
+      timerEl.style.color = 'var(--red)';
+      showToast('Time is up!');
+      timerRunning = false;
+    }
+  }, 1000);
+
+  // --- Toast notification ---
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(-50%) translateY(20px)';
+    }, 2000);
+  }
+
+  // --- Print homework ---
+  function printHomework() {
+    const printContent = document.getElementById('homeworkPrintArea').innerHTML;
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Engineering Design - Unit 1 Homework</title>
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Space Grotesk', sans-serif; padding: 40px; color: #111; }
+          h2 { font-size: 20px; margin-bottom: 4px; }
+          .print-sub { color: #555; font-size: 12px; margin-bottom: 20px; }
+          .print-section { margin-bottom: 20px; }
+          .print-q { font-size: 13px; font-weight: 600; color: #111; margin-bottom: 8px; display: flex; gap: 8px; }
+          .pq { width: 20px; height: 20px; border-radius: 50%; background: #f59e0b; color: #000; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+          .print-lines { padding-left: 28px; display: flex; flex-direction: column; gap: 18px; margin-bottom: 20px; }
+          .print-line { border-bottom: 1px solid #ccc; height: 22px; }
+          .print-note { font-size: 11px; color: #888; border-top: 1px solid #ddd; padding-top: 12px; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head>
+      <body>${printContent}</body>
+      </html>
+    `);
+    win.document.close();
+    setTimeout(() => { win.print(); }, 500);
+    showToast('Opening print dialog...');
+  }
+
+  // Initial toast
+  setTimeout(() => {
+    showToast('Navigate: Arrow keys / Click dots / Swipe. Timer: Click to start, double-click to reset.');
+  }, 800);
+</script>
+</body>
+</html>
