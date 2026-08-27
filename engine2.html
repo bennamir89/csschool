@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineering Design – Unit 2: Planning</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #EBE9E1; }
+  h1, h2, h3, h4, .serif { font-family: 'Playfair Display', serif; }
+  ::selection { background: #D6D3D1; color: #1C1917; }
+
+  .slide { display: none; min-height: 100vh; }
+  .slide.active { display: flex; }
+
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  }
+  .glass-panel:hover {
+    background: rgba(255, 255, 255, 0.65);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  }
+
+  .glass-card {
+    transition: all 0.3s ease;
+  }
+  .glass-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .progress-bar {
+    transition: width 0.4s ease;
+  }
+
+  .fade-in {
+    animation: fadeIn 0.5s ease forwards;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .stagger-1 { animation-delay: 0.1s; opacity: 0; }
+  .stagger-2 { animation-delay: 0.2s; opacity: 0; }
+  .stagger-3 { animation-delay: 0.3s; opacity: 0; }
+  .stagger-4 { animation-delay: 0.4s; opacity: 0; }
+  .stagger-5 { animation-delay: 0.5s; opacity: 0; }
+  .stagger-6 { animation-delay: 0.6s; opacity: 0; }
+
+  .tag {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .nav-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #D6D3D1; cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .nav-dot.active { background: #2C2420; width: 24px; border-radius: 4px; }
+
+  .gantt-bar {
+    height: 28px;
+    border-radius: 6px;
+    background: #2C2420;
+    transition: width 0.8s ease;
+  }
+  .gantt-bar.alt { background: #8E8D8A; }
+  .gantt-bar.accent { background: #D8C3A5; }
+
+  .worksheet-line {
+    border-bottom: 1px dashed #D6D3D1;
+    min-height: 40px;
+    width: 100%;
+  }
+
+  .print-section { display: none; }
+  @media print {
+    .no-print { display: none !important; }
+    .print-section { display: block !important; }
+    .slide { display: none !important; }
+    body { background: white; }
+  }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    padding: 12px 20px; border-radius: 12px;
+    background: #2C2420; color: white;
+    font-size: 14px; font-weight: 500;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.4s ease; z-index: 100;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  .session-badge-1 { background: #2C2420; color: white; }
+  .session-badge-2 { background: #8E8D8A; color: white; }
+  .phase-engage { border-left: 4px solid #D8C3A5; }
+  .phase-explore { border-left: 4px solid #8E8D8A; }
+  .phase-explain { border-left: 4px solid #2C2420; }
+  .phase-extend { border-left: 4px solid #D8C3A5; }
+  .phase-evaluate { border-left: 4px solid #8E8D8A; }
+
+  .video-embed {
+    aspect-ratio: 16/9;
+    background: #1C1917;
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+  }
+  .video-embed::after {
+    content: '';
+    position: absolute;
+    width: 64px; height: 64px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .checklist-item { cursor: pointer; user-select: none; }
+  .checklist-item.checked .check-box {
+    background: #2C2420; border-color: #2C2420;
+  }
+  .checklist-item.checked .check-box svg { opacity: 1; }
+  .checklist-item .check-box svg { opacity: 0; transition: opacity 0.2s; }
+  .checklist-item.checked span { text-decoration: line-through; color: #8E8D8A; }
+
+  .reveal-answer { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+  .reveal-answer.open { max-height: 500px; }
+</style>
+</head>
+<body class="relative overflow-hidden">
+
+<!-- Background Decorations -->
+<div class="fixed inset-0 pointer-events-none no-print">
+  <div class="absolute top-20 left-10 w-72 h-72 bg-[#D8C3A5] opacity-20 rounded-full blur-3xl"></div>
+  <div class="absolute bottom-20 right-10 w-96 h-96 bg-[#8E8D8A] opacity-20 rounded-full blur-3xl"></div>
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#D8C3A5] opacity-10 rounded-full blur-3xl"></div>
+</div>
+
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 left-0 right-0 z-50 no-print">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="glass-panel rounded-2xl mt-3 px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-[#2C2420] rounded-lg flex items-center justify-center">
+          <i data-lucide="ruler" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-stone-900">Engineering Design</p>
+          <p class="text-xs text-stone-500">Unit 2 – Planning</p>
+        </div>
+      </div>
+      <div class="hidden md:flex items-center gap-2" id="navDots"></div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-stone-500" id="slideCounter">1 / 17</span>
+        <button onclick="toggleSessionView()" class="text-xs bg-stone-200 hover:bg-stone-300 px-3 py-1.5 rounded-lg transition-all font-medium" id="sessionToggle">
+          All Slides
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- Progress Bar -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-1">
+    <div class="h-0.5 bg-stone-300/50 rounded-full overflow-hidden">
+      <div class="progress-bar h-full bg-[#2C2420] rounded-full" id="progressBar" style="width: 5.88%"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- Slide Navigation Arrows -->
+<button onclick="prevSlide()" class="fixed left-4 top-1/2 -translate-y-1/2 z-40 no-print w-10 h-10 glass-panel rounded-full flex items-center justify-center hover:bg-white/60 transition-all" id="prevBtn">
+  <i data-lucide="chevron-left" class="w-5 h-5 text-stone-600"></i>
+</button>
+<button onclick="nextSlide()" class="fixed right-4 top-1/2 -translate-y-1/2 z-40 no-print w-10 h-10 glass-panel rounded-full flex items-center justify-center hover:bg-white/60 transition-all" id="nextBtn">
+  <i data-lucide="chevron-right" class="w-5 h-5 text-stone-600"></i>
+</button>
+
+<!-- ==================== SLIDES ==================== -->
+
+<!-- SLIDE 1: Title -->
+<div class="slide active flex-col items-center justify-center px-4 pt-20" data-session="0" data-phase="title">
+  <div class="text-center max-w-4xl mx-auto fade-in">
+    <div class="inline-flex items-center gap-2 glass-panel rounded-full px-4 py-2 mb-8 stagger-1 fade-in">
+      <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+      <span class="tag text-stone-600">AP Computer Science × Engineering Design</span>
+    </div>
+    <h1 class="text-4xl md:text-6xl lg:text-7xl font-semibold text-stone-900 tracking-tight leading-[1.05] mb-6 stagger-2 fade-in">
+      Unit 2:<br><span class="text-[#8E8D8A]">Planning</span>
+    </h1>
+    <p class="text-lg md:text-xl text-stone-500 max-w-2xl mx-auto leading-relaxed mb-10 stagger-3 fade-in">
+      From design briefs to Gantt charts — learn how engineers transform ideas into structured, actionable project plans.
+    </p>
+    <div class="flex flex-wrap items-center justify-center gap-4 stagger-4 fade-in">
+      <div class="glass-panel rounded-xl px-5 py-3 flex items-center gap-3">
+        <i data-lucide="clock" class="w-4 h-4 text-stone-500"></i>
+        <span class="text-sm text-stone-600">2 × 45 min sessions</span>
+      </div>
+      <div class="glass-panel rounded-xl px-5 py-3 flex items-center gap-3">
+        <i data-lucide="layers" class="w-4 h-4 text-stone-500"></i>
+        <span class="text-sm text-stone-600">5E Lesson Model</span>
+      </div>
+      <div class="glass-panel rounded-xl px-5 py-3 flex items-center gap-3">
+        <i data-lucide="book-open" class="w-4 h-4 text-stone-500"></i>
+        <span class="text-sm text-stone-600">17 Slides</span>
+      </div>
+    </div>
+    <p class="mt-12 text-xs text-stone-400 stagger-5 fade-in">Press <kbd class="px-1.5 py-0.5 bg-stone-200 rounded text-stone-600 font-mono">→</kbd> or click arrows to navigate</p>
+  </div>
+</div>
+
+<!-- SLIDE 2: Lesson Objectives -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="0" data-phase="objectives">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="mb-8">
+      <span class="tag text-stone-500 bg-stone-200 px-3 py-1 rounded-full">Overview</span>
+      <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mt-4">Lesson Objectives</h2>
+      <p class="text-stone-500 mt-2">By the end of these two sessions, students will be able to:</p>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="glass-panel glass-card rounded-2xl p-6 phase-explain stagger-1 fade-in">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 bg-[#2C2420] rounded-xl flex items-center justify-center flex-shrink-0">
+            <span class="text-white font-semibold text-sm">01</span>
+          </div>
+          <div>
+            <h4 class="font-semibold text-stone-900 text-sm">Define a Design Brief</h4>
+            <p class="text-stone-500 text-sm mt-1 leading-relaxed">Write a clear, concise design brief that identifies the problem, client, and intended outcome.</p>
+          </div>
+        </div>
+      </div>
+      <div class="glass-panel glass-card rounded-2xl p-6 phase-explain stagger-2 fade-in">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 bg-[#2C2420] rounded-xl flex items-center justify-center flex-shrink-0">
+            <span class="text-white font-semibold text-sm">02</span>
+          </div>
+          <div>
+            <h4 class="font-semibold text-stone-900 text-sm">Write Design Specifications</h4>
+            <p class="text-stone-500 text-sm mt-1 leading-relaxed">Distinguish between design specifications and performance specifications with measurable criteria.</p>
+          </div>
+        </div>
+      </div>
+      <div class="glass-panel glass-card rounded-2xl p-6 phase-explain stagger-3 fade-in">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 bg-[#8E8D8A] rounded-xl flex items-center justify-center flex-shrink-0">
+            <span class="text-white font-semibold text-sm">03</span>
+          </div>
+          <div>
+            <h4 class="font-semibold text-stone-900 text-sm">Create a Gantt Chart</h4>
+            <p class="text-stone-500 text-sm mt-1 leading-relaxed">Construct a Gantt chart to schedule tasks, identify dependencies, and manage project timelines.</p>
+          </div>
+        </div>
+      </div>
+      <div class="glass-panel glass-card rounded-2xl p-6 phase-explain stagger-4 fade-in">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 bg-[#8E8D8A] rounded-xl flex items-center justify-center flex-shrink-0">
+            <span class="text-white font-semibold text-sm">04</span>
+          </div>
+          <div>
+            <h4 class="font-semibold text-stone-900 text-sm">Conduct Risk Assessment</h4>
+            <p class="text-stone-500 text-sm mt-1 leading-relaxed">Identify potential risks in a project plan and propose appropriate mitigation strategies.</p>
+          </div>
+        </div>
+      </div>
+      <div class="glass-panel glass-card rounded-2xl p-6 phase-explain md:col-span-2 stagger-5 fade-in">
+        <div class="flex items-start gap-4">
+          <div class="w-10 h-10 bg-[#D8C3A5] rounded-xl flex items-center justify-center flex-shrink-0">
+            <span class="text-white font-semibold text-sm">05</span>
+          </div>
+          <div>
+            <h4 class="font-semibold text-stone-900 text-sm">Apply the Planning Process to a CS/Engineering Context</h4>
+            <p class="text-stone-500 text-sm mt-1 leading-relaxed">Connect planning tools to real software development and engineering projects — bridging CS knowledge with design thinking.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: Session Overview -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="0" data-phase="overview">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="mb-8">
+      <span class="tag text-stone-500 bg-stone-200 px-3 py-1 rounded-full">Roadmap</span>
+      <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mt-4">Session Overview</h2>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6">
+      <!-- Session 1 -->
+      <div class="glass-panel rounded-2xl overflow-hidden stagger-1 fade-in">
+        <div class="session-badge-1 px-5 py-3 flex items-center gap-2">
+          <i data-lucide="sun" class="w-4 h-4"></i>
+          <span class="text-sm font-semibold">Session 1 — 45 min</span>
+        </div>
+        <div class="p-5 space-y-3">
+          <div class="flex items-center gap-3 phase-engage pl-3 py-2">
+            <span class="tag text-[#D8C3A5] w-16">Engage</span>
+            <span class="text-sm text-stone-600">Starter video & discussion</span>
+            <span class="ml-auto text-xs text-stone-400">7 min</span>
+          </div>
+          <div class="flex items-center gap-3 phase-explore pl-3 py-2">
+            <span class="tag text-[#8E8D8A] w-16">Explore</span>
+            <span class="text-sm text-stone-600">Think-Pair-Share activity</span>
+            <span class="ml-auto text-xs text-stone-400">8 min</span>
+          </div>
+          <div class="flex items-center gap-3 phase-explain pl-3 py-2">
+            <span class="tag text-[#2C2420] w-16">Explain</span>
+            <span class="text-sm text-stone-600">Design Briefs & Specifications</span>
+            <span class="ml-auto text-xs text-stone-400">20 min</span>
+          </div>
+          <div class="flex items-center gap-3 phase-extend pl-3 py-2">
+            <span class="tag text-[#D8C3A5] w-16">Extend</span>
+            <span class="text-sm text-stone-600">Write your own brief</span>
+            <span class="ml-auto text-xs text-stone-400">10 min</span>
+          </div>
+        </div>
+      </div>
+      <!-- Session 2 -->
+      <div class="glass-panel rounded-2xl overflow-hidden stagger-2 fade-in">
+        <div class="session-badge-2 px-5 py-3 flex items-center gap-2">
+          <i data-lucide="moon" class="w-4 h-4"></i>
+          <span class="text-sm font-semibold">Session 2 — 45 min</span>
+        </div>
+        <div class="p-5 space-y-3">
+          <div class="flex items-center gap-3 phase-engage pl-3 py-2">
+            <span class="tag text-[#D8C3A5] w-16">Engage</span>
+            <span class="text-sm text-stone-600">Quick review & hook</span>
+            <span class="ml-auto text-xs text-stone-400">5 min</span>
+          </div>
+          <div class="flex items-center gap-3 phase-explain pl-3 py-2">
+            <span class="tag text-[#2C2420] w-16">Explain</span>
+            <span class="text-sm text-stone-600">Gantt Charts & Risk Assessment</span>
+            <span class="ml-auto text-xs text-stone-400">15 min</span>
+          </div>
+          <div class="flex items-center gap-3 phase-extend pl-3 py-2">
+            <span class="tag text-[#D8C3A5] w-16">Extend</span>
+            <span class="text-sm text-stone-600">Worksheet: Build a project plan</span>
+            <span class="ml-auto text-xs text-stone-400">18 min</span>
+          </div>
+          <div class="flex items-center gap-3 phase-evaluate pl-3 py-2">
+            <span class="tag text-[#8E8D8A] w-16">Evaluate</span>
+            <span class="text-sm text-stone-600">Exit Ticket</span>
+            <span class="ml-auto text-xs text-stone-400">7 min</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="glass-panel rounded-2xl p-5 mt-6 flex items-center gap-4 stagger-3 fade-in">
+      <div class="w-10 h-10 bg-[#D8C3A5]/30 rounded-xl flex items-center justify-center flex-shrink-0">
+        <i data-lucide="lightbulb" class="w-5 h-5 text-[#2C2420]"></i>
+      </div>
+      <p class="text-sm text-stone-600"><strong>CS Connection:</strong> Relate project planning to Agile sprints, sprint planning, and backlog grooming — concepts students may already know from CS.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: ENGAGE - Starter Video -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="1" data-phase="engage">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="session-badge-1 text-xs px-3 py-1 rounded-full font-bold">SESSION 1</span>
+      <span class="tag text-[#D8C3A5] bg-[#D8C3A5]/20 px-3 py-1 rounded-full">ENGAGE</span>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mb-2">What Happens Without a Plan?</h2>
+    <p class="text-stone-500 mb-6">Watch this short video and consider: <em>"Why do even the best ideas fail without proper planning?"</em></p>
+    
+    <div class="video-embed stagger-1 fade-in" onclick="window.open('https://www.youtube.com/watch?v=Qe2wHCB6g8E', '_blank')">
+      <img src="https://picsum.photos/seed/engineering-plan-fail/960/540.jpg" alt="Video Thumbnail" class="w-full h-full object-cover opacity-60">
+      <div class="absolute inset-0 flex items-center justify-center z-10">
+        <div class="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
+          <i data-lucide="play" class="w-7 h-7 text-[#2C2420] ml-1"></i>
+        </div>
+      </div>
+      <div class="absolute bottom-4 left-4 z-10 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2">
+        <p class="text-white text-xs font-medium">Suggested: "Engineering Failures Due to Poor Planning" (3-4 min)</p>
+      </div>
+    </div>
+
+    <div class="glass-panel rounded-2xl p-5 mt-6 stagger-2 fade-in">
+      <p class="text-sm font-semibold text-stone-900 mb-3">Discussion Prompts:</p>
+      <ul class="space-y-2 text-sm text-stone-600">
+        <li class="flex items-start gap-2"><span class="text-[#D8C3A5] font-bold mt-0.5">1.</span> What was the root cause of failure in each case?</li>
+        <li class="flex items-start gap-2"><span class="text-[#D8C3A5] font-bold mt-0.5">2.</span> How could planning have prevented these failures?</li>
+        <li class="flex items-start gap-2"><span class="text-[#D8C3A5] font-bold mt-0.5">3.</span> Can you think of a software project that failed due to poor planning?</li>
+      </ul>
+    </div>
+
+    <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl stagger-3 fade-in">
+      <p class="text-xs text-amber-800"><strong>📌 Teacher Note:</strong> If the suggested video isn't available, alternatives: <em>"Why Software Projects Fail"</em> by Primeagen, or <em>"Denver Airport Baggage System"</em> — a classic engineering planning failure. See Resources slide for links.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: EXPLORE - Think Pair Share -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="1" data-phase="explore">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="session-badge-1 text-xs px-3 py-1 rounded-full font-bold">SESSION 1</span>
+      <span class="tag text-[#8E8D8A] bg-[#8E8D8A]/20 px-3 py-1 rounded-full">EXPLORE</span>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mb-2">Think – Pair – Share</h2>
+    <p class="text-stone-500 mb-8">You've been asked to build a <strong>smart recycling bin</strong> that sorts waste using sensors. <em>Where do you even start?</em></p>
+    
+    <div class="grid md:grid-cols-3 gap-4">
+      <div class="glass-panel glass-card rounded-2xl p-6 text-center stagger-1 fade-in">
+        <div class="w-14 h-14 bg-[#2C2420] rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <i data-lucide="brain" class="w-7 h-7 text-white"></i>
+        </div>
+        <h4 class="font-semibold text-stone-900 mb-2">Think (2 min)</h4>
+        <p class="text-sm text-stone-500 leading-relaxed">Silently list 5 things you'd need to figure out before building anything.</p>
+      </div>
+      <div class="glass-panel glass-card rounded-2xl p-6 text-center stagger-2 fade-in">
+        <div class="w-14 h-14 bg-[#8E8D8A] rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <i data-lucide="users" class="w-7 h-7 text-white"></i>
+        </div>
+        <h4 class="font-semibold text-stone-900 mb-2">Pair (3 min)</h4>
+        <p class="text-sm text-stone-500 leading-relaxed">Compare lists with your partner. Combine and prioritize your top 5 items.</p>
+      </div>
+      <div class="glass-panel glass-card rounded-2xl p-6 text-center stagger-3 fade-in">
+        <div class="w-14 h-14 bg-[#D8C3A5] rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <i data-lucide="mic" class="w-7 h-7 text-white"></i>
+        </div>
+        <h4 class="font-semibold text-stone-900 mb-2">Share (3 min)</h4>
+        <p class="text-sm text-stone-500 leading-relaxed">Share with the class. Teacher records responses on the board.</p>
+      </div>
+    </div>
+
+    <div class="glass-panel rounded-2xl p-5 mt-6 stagger-4 fade-in">
+      <p class="text-sm font-semibold text-stone-900 mb-3">🎯 Expected Student Responses (for your board):</p>
+      <div class="flex flex-wrap gap-2">
+        <span class="bg-stone-200 text-stone-700 text-xs px-3 py-1.5 rounded-full">Budget</span>
+        <span class="bg-stone-200 text-stone-700 text-xs px-3 py-1.5 rounded-full">Materials</span>
+        <span class="bg-stone-200 text-stone-700 text-xs px-3 py-1.5 rounded-full">Timeline</span>
+        <span class="bg-stone-200 text-stone-700 text-xs px-3 py-1.5 rounded-full">Who is it for?</span>
+        <span class="bg-stone-200 text-stone-700 text-xs px-3 py-1.5 rounded-full">Sensor types</span>
+        <span class="bg-stone-200 text-stone-700 text-xs px-3 py-1.5 rounded-full">Size/weight</span>
+        <span class="bg-stone-200 text-stone-700 text-xs px-3 py-1.5 rounded-full">Safety</span>
+        <span class="bg-stone-200 text-stone-700 text-xs px-3 py-1.5 rounded-full">Power source</span>
+        <span class="bg-stone-200 text-stone-700 text-xs px-3 py-1.5 rounded-full">Testing plan</span>
+        <span class="bg-stone-200 text-stone-700 text-xs px-3 py-1.5 rounded-full">Skills needed</span>
+        <span class="bg-stone-200 text-stone-700 text-xs px-3 py-1.5 rounded-full">Regulations</span>
+        <span class="bg-stone-200 text-stone-700 text-xs px-3 py-1.5 rounded-full">Environmental impact</span>
+      </div>
+      <p class="text-xs text-stone-400 mt-3 italic">Bridge: "These are exactly what a design brief and specifications capture — let's formalize this."</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: EXPLAIN - The Design Brief -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="1" data-phase="explain">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="session-badge-1 text-xs px-3 py-1 rounded-full font-bold">SESSION 1</span>
+      <span class="tag text-[#2C2420] bg-[#2C2420]/10 px-3 py-1 rounded-full">EXPLAIN</span>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mb-2">The Design Brief</h2>
+    <p class="text-stone-500 mb-8">A concise statement that defines the problem, the client, and the desired outcome.</p>
+
+    <div class="glass-panel rounded-2xl p-6 mb-6 stagger-1 fade-in">
+      <div class="flex items-center gap-2 mb-4">
+        <i data-lucide="file-text" class="w-5 h-5 text-[#2C2420]"></i>
+        <h4 class="font-semibold text-stone-900">Key Components</h4>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 bg-[#D8C3A5]/30 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span class="text-sm font-bold text-[#2C2420]">P</span>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-stone-900">Problem Statement</p>
+            <p class="text-xs text-stone-500 mt-0.5">What needs to be solved? Be specific.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 bg-[#D8C3A5]/30 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span class="text-sm font-bold text-[#2C2420]">C</span>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-stone-900">Client / Target User</p>
+            <p class="text-xs text-stone-500 mt-0.5">Who is this for? Age, needs, context.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 bg-[#D8C3A5]/30 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span class="text-sm font-bold text-[#2C2420]">O</span>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-stone-900">Outcome / Deliverable</p>
+            <p class="text-xs text-stone-500 mt-0.5">What will be produced? A prototype? Full product?</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 bg-[#D8C3A5]/30 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span class="text-sm font-bold text-[#2C2420]">S</span>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-stone-900">Scope & Constraints</p>
+            <p class="text-xs text-stone-500 mt-0.5">Budget, timeline, materials, limitations.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-panel rounded-2xl p-6 stagger-2 fade-in border-l-4 border-[#D8C3A5]">
+      <p class="text-xs font-bold text-stone-500 uppercase tracking-wide mb-3">Example Design Brief</p>
+      <div class="bg-white/60 rounded-xl p-5 text-sm text-stone-700 leading-relaxed">
+        <p><strong>Problem:</strong> Elderly residents in care homes struggle to remember when to take their medication, leading to missed doses.</p>
+        <p class="mt-2"><strong>Client:</strong> Sunrise Care Home — 45 residents aged 70-95, many with mild cognitive impairment.</p>
+        <p class="mt-2"><strong>Deliverable:</strong> A simple, affordable medication reminder device that is intuitive for non-technical users.</p>
+        <p class="mt-2"><strong>Scope:</strong> Budget under $30/unit, must be operable without a smartphone, battery life ≥ 7 days.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: EXPLAIN - Design Specs vs Performance Specs -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="1" data-phase="explain">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="session-badge-1 text-xs px-3 py-1 rounded-full font-bold">SESSION 1</span>
+      <span class="tag text-[#2C2420] bg-[#2C2420]/10 px-3 py-1 rounded-full">EXPLAIN</span>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mb-2">Specifications</h2>
+    <p class="text-stone-500 mb-8">Not all specifications are created equal. Engineers distinguish between two critical types:</p>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="glass-panel rounded-2xl p-6 stagger-1 fade-in">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-[#2C2420] rounded-xl flex items-center justify-center">
+            <i data-lucide="pencil-ruler" class="w-5 h-5 text-white"></i>
+          </div>
+          <div>
+            <h4 class="font-semibold text-stone-900">Design Specifications</h4>
+            <p class="text-xs text-stone-400">What it <em>looks like</em> and <em>is made of</em></p>
+          </div>
+        </div>
+        <ul class="space-y-2 text-sm text-stone-600">
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-[#D8C3A5] mt-0.5 flex-shrink-0"></i>Dimensions: 15cm × 10cm × 5cm</li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-[#D8C3A5] mt-0.5 flex-shrink-0"></i>Material: ABS plastic casing</li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-[#D8C3A5] mt-0.5 flex-shrink-0"></i>Color: White with blue accents</li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-[#D8C3A5] mt-0.5 flex-shrink-0"></i>Weight: ≤ 200g</li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-[#D8C3A5] mt-0.5 flex-shrink-0"></i>Interface: 3 physical buttons</li>
+        </ul>
+      </div>
+      <div class="glass-panel rounded-2xl p-6 stagger-2 fade-in">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-[#8E8D8A] rounded-xl flex items-center justify-center">
+            <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+          </div>
+          <div>
+            <h4 class="font-semibold text-stone-900">Performance Specifications</h4>
+            <p class="text-xs text-stone-400">What it <em>must do</em> and <em>how well</em></p>
+          </div>
+        </div>
+        <ul class="space-y-2 text-sm text-stone-600">
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-[#8E8D8A] mt-0.5 flex-shrink-0"></i>Alarm volume: ≥ 80dB at 1m</li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-[#8E8D8A] mt-0.5 flex-shrink-0"></i>Battery life: ≥ 168 hours</li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-[#8E8D8A] mt-0.5 flex-shrink-0"></i>Response time: < 0.5s button-to-alarm</li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-[#8E8D8A] mt-0.5 flex-shrink-0"></i>Must store ≥ 30 alarm schedules</li>
+          <li class="flex items-start gap-2"><i data-lucide="check" class="w-4 h-4 text-[#8E8D8A] mt-0.5 flex-shrink-0"></i>Drop test: survives 1.5m onto concrete</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="glass-panel rounded-2xl p-5 mt-6 stagger-3 fade-in">
+      <div class="flex items-start gap-3">
+        <i data-lucide="lightbulb" class="w-5 h-5 text-[#D8C3A5] flex-shrink-0 mt-0.5"></i>
+        <div>
+          <p class="text-sm font-semibold text-stone-900">CS Connection</p>
+          <p class="text-sm text-stone-500 mt-1">Think of <strong>design specs</strong> as the UI/UX requirements (layout, colors, font sizes) and <strong>performance specs</strong> as non-functional requirements (response time < 200ms, 99.9% uptime, supports 1000 concurrent users).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: EXPLAIN - Writing Measurable Specifications -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="1" data-phase="explain">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="session-badge-1 text-xs px-3 py-1 rounded-full font-bold">SESSION 1</span>
+      <span class="tag text-[#2C2420] bg-[#2C2420]/10 px-3 py-1 rounded-full">EXPLAIN</span>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mb-2">Writing <em>Measurable</em> Specs</h2>
+    <p class="text-stone-500 mb-8">Vague specifications lead to vague products. Always use the <strong>MOST</strong> test.</p>
+
+    <div class="glass-panel rounded-2xl p-6 mb-6 stagger-1 fade-in">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-12 h-12 bg-[#2C2420] rounded-xl flex items-center justify-center">
+          <span class="text-white font-bold text-lg">MOST</span>
+        </div>
+        <div>
+          <h4 class="font-semibold text-stone-900">The MOST Test</h4>
+          <p class="text-xs text-stone-500">Every specification should pass all four checks</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-white/50 rounded-xl p-4 text-center">
+          <p class="text-2xl font-bold text-[#2C2420]">M</p>
+          <p class="text-xs font-semibold text-stone-900 mt-1">Measurable</p>
+          <p class="text-xs text-stone-400 mt-1">Can you quantify it?</p>
+        </div>
+        <div class="bg-white/50 rounded-xl p-4 text-center">
+          <p class="text-2xl font-bold text-[#8E8D8A]">O</p>
+          <p class="text-xs font-semibold text-stone-900 mt-1">Observable</p>
+          <p class="text-xs text-stone-400 mt-1">Can you test it?</p>
+        </div>
+        <div class="bg-white/50 rounded-xl p-4 text-center">
+          <p class="text-2xl font-bold text-[#D8C3A5]">S</p>
+          <p class="text-xs font-semibold text-stone-900 mt-1">Specific</p>
+          <p class="text-xs text-stone-400 mt-1">Is it clear & precise?</p>
+        </div>
+        <div class="bg-white/50 rounded-xl p-4 text-center">
+          <p class="text-2xl font-bold text-[#2C2420]">T</p>
+          <p class="text-xs font-semibold text-stone-900 mt-1">Testable</p>
+          <p class="text-xs text-stone-400 mt-1">Can you verify it?</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-3 stagger-2 fade-in">
+      <p class="text-sm font-semibold text-stone-900">Examples: Vague vs. Measurable</p>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+          <p class="text-xs font-bold text-red-400 uppercase mb-1">✗ Vague</p>
+          <p class="text-sm text-stone-700">"The device should be small and lightweight."</p>
+        </div>
+        <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+          <p class="text-xs font-bold text-green-600 uppercase mb-1">✓ Measurable</p>
+          <p class="text-sm text-stone-700">"The device must fit in a palm (≤ 12cm × 8cm) and weigh ≤ 150g."</p>
+        </div>
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+          <p class="text-xs font-bold text-red-400 uppercase mb-1">✗ Vague</p>
+          <p class="text-sm text-stone-700">"The app should be fast."</p>
+        </div>
+        <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+          <p class="text-xs font-bold text-green-600 uppercase mb-1">✓ Measurable</p>
+          <p class="text-sm text-stone-700">"Screen load time must be < 2 seconds on 4G connection."</p>
+        </div>
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+          <p class="text-xs font-bold text-red-400 uppercase mb-1">✗ Vague</p>
+          <p class="text-sm text-stone-700">"It should be easy to use."</p>
+        </div>
+        <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+          <p class="text-xs font-bold text-green-600 uppercase mb-1">✓ Measurable</p>
+          <p class="text-sm text-stone-700">"A first-time user must complete setup in ≤ 3 minutes without instructions."</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: EXTEND - Write Your Own Brief -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="1" data-phase="extend">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="session-badge-1 text-xs px-3 py-1 rounded-full font-bold">SESSION 1</span>
+      <span class="tag text-[#D8C3A5] bg-[#D8C3A5]/20 px-3 py-1 rounded-full">EXTEND</span>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mb-2">Your Turn: Write a Design Brief</h2>
+    <p class="text-stone-500 mb-8">Choose ONE scenario. Write a design brief with at least 4 design specs and 4 performance specs. (10 minutes)</p>
+
+    <div class="grid md:grid-cols-3 gap-4 mb-6">
+      <div class="glass-panel glass-card rounded-2xl p-5 cursor-pointer border-2 border-transparent hover:border-[#D8C3A5] transition-all scenario-card" onclick="selectScenario(this, 'A')">
+        <div class="text-3xl mb-3">📱</div>
+        <h4 class="font-semibold text-stone-900 text-sm">Scenario A</h4>
+        <p class="text-xs text-stone-500 mt-1">A phone stand for students that also charges the phone and works on uneven desk surfaces.</p>
+      </div>
+      <div class="glass-panel glass-card rounded-2xl p-5 cursor-pointer border-2 border-transparent hover:border-[#D8C3A5] transition-all scenario-card" onclick="selectScenario(this, 'B')">
+        <div class="text-3xl mb-3">🌱</div>
+        <h4 class="font-semibold text-stone-900 text-sm">Scenario B</h4>
+        <p class="text-xs text-stone-500 mt-1">An automated plant watering system for a school greenhouse that works during holidays.</p>
+      </div>
+      <div class="glass-panel glass-card rounded-2xl p-5 cursor-pointer border-2 border-transparent hover:border-[#D8C3A5] transition-all scenario-card" onclick="selectScenario(this, 'C')">
+        <div class="text-3xl mb-3">♿</div>
+        <h4 class="font-semibold text-stone-900 text-sm">Scenario C</h4>
+        <p class="text-xs text-stone-500 mt-1">A backpack modification for wheelchair users that allows easy access to belongings.</p>
+      </div>
+    </div>
+
+    <div class="glass-panel rounded-2xl p-6 stagger-2 fade-in">
+      <p class="text-sm font-semibold text-stone-900 mb-4">Your Design Brief Template</p>
+      <div class="space-y-4">
+        <div>
+          <label class="text-xs font-semibold text-stone-500 uppercase tracking-wide">Problem Statement</label>
+          <div class="worksheet-line mt-1"></div>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-stone-500 uppercase tracking-wide">Client / Target User</label>
+          <div class="worksheet-line mt-1"></div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs font-semibold text-stone-500 uppercase tracking-wide">Design Specs (×4)</label>
+            <div class="worksheet-line mt-1"></div>
+            <div class="worksheet-line mt-1"></div>
+            <div class="worksheet-line mt-1"></div>
+            <div class="worksheet-line mt-1"></div>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-stone-500 uppercase tracking-wide">Performance Specs (×4)</label>
+            <div class="worksheet-line mt-1"></div>
+            <div class="worksheet-line mt-1"></div>
+            <div class="worksheet-line mt-1"></div>
+            <div class="worksheet-line mt-1"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10: ENGAGE Session 2 - Quick Review -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="2" data-phase="engage">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="session-badge-2 text-xs px-3 py-1 rounded-full font-bold">SESSION 2</span>
+      <span class="tag text-[#D8C3A5] bg-[#D8C3A5]/20 px-3 py-1 rounded-full">ENGAGE</span>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mb-2">Quick Review: True or False?</h2>
+    <p class="text-stone-500 mb-8">5 rapid-fire questions to reactivate prior knowledge from Session 1.</p>
+
+    <div class="space-y-3" id="quizContainer">
+      <div class="glass-panel rounded-xl p-5 flex items-center justify-between quiz-item stagger-1 fade-in" data-answer="false">
+        <p class="text-sm text-stone-700 pr-4">1. A design brief should include every detail about how the product will work.</p>
+        <div class="flex gap-2 flex-shrink-0">
+          <button class="quiz-btn px-4 py-2 rounded-lg text-xs font-bold bg-green-100 text-green-700 hover:bg-green-200 transition-all" onclick="answerQuiz(this, true)">TRUE</button>
+          <button class="quiz-btn px-4 py-2 rounded-lg text-xs font-bold bg-red-100 text-red-700 hover:bg-red-200 transition-all" onclick="answerQuiz(this, false)">FALSE</button>
+        </div>
+      </div>
+      <div class="glass-panel rounded-xl p-5 flex items-center justify-between quiz-item stagger-2 fade-in" data-answer="true">
+        <p class="text-sm text-stone-700 pr-4">2. Performance specs describe <em>how well</em> a product must function.</p>
+        <div class="flex gap-2 flex-shrink-0">
+          <button class="quiz-btn px-4 py-2 rounded-lg text-xs font-bold bg-green-100 text-green-700 hover:bg-green-200 transition-all" onclick="answerQuiz(this, true)">TRUE</button>
+          <button class="quiz-btn px-4 py-2 rounded-lg text-xs font-bold bg-red-100 text-red-700 hover:bg-red-200 transition-all" onclick="answerQuiz(this, false)">FALSE</button>
+        </div>
+      </div>
+      <div class="glass-panel rounded-xl p-5 flex items-center justify-between quiz-item stagger-3 fade-in" data-answer="false">
+        <p class="text-sm text-stone-700 pr-4">3. "It should look nice" is a good design specification.</p>
+        <div class="flex gap-2 flex-shrink-0">
+          <button class="quiz-btn px-4 py-2 rounded-lg text-xs font-bold bg-green-100 text-green-700 hover:bg-green-200 transition-all" onclick="answerQuiz(this, true)">TRUE</button>
+          <button class="quiz-btn px-4 py-2 rounded-lg text-xs font-bold bg-red-100 text-red-700 hover:bg-red-200 transition-all" onclick="answerQuiz(this, false)">FALSE</button>
+        </div>
+      </div>
+      <div class="glass-panel rounded-xl p-5 flex items-center justify-between quiz-item stagger-4 fade-in" data-answer="true">
+        <p class="text-sm text-stone-700 pr-4">4. A good specification is both measurable and testable.</p>
+        <div class="flex gap-2 flex-shrink-0">
+          <button class="quiz-btn px-4 py-2 rounded-lg text-xs font-bold bg-green-100 text-green-700 hover:bg-green-200 transition-all" onclick="answerQuiz(this, true)">TRUE</button>
+          <button class="quiz-btn px-4 py-2 rounded-lg text-xs font-bold bg-red-100 text-red-700 hover:bg-red-200 transition-all" onclick="answerQuiz(this, false)">FALSE</button>
+        </div>
+      </div>
+      <div class="glass-panel rounded-xl p-5 flex items-center justify-between quiz-item stagger-5 fade-in" data-answer="false">
+        <p class="text-sm text-stone-700 pr-4">5. Design specs and performance specs are the same thing.</p>
+        <div class="flex gap-2 flex-shrink-0">
+          <button class="quiz-btn px-4 py-2 rounded-lg text-xs font-bold bg-green-100 text-green-700 hover:bg-green-200 transition-all" onclick="answerQuiz(this, true)">TRUE</button>
+          <button class="quiz-btn px-4 py-2 rounded-lg text-xs font-bold bg-red-100 text-red-700 hover:bg-red-200 transition-all" onclick="answerQuiz(this, false)">FALSE</button>
+        </div>
+      </div>
+    </div>
+    <div id="quizFeedback" class="mt-4 text-sm text-stone-500 text-center"></div>
+  </div>
+</div>
+
+<!-- SLIDE 11: EXPLAIN - Gantt Charts -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="2" data-phase="explain">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="session-badge-2 text-xs px-3 py-1 rounded-full font-bold">SESSION 2</span>
+      <span class="tag text-[#2C2420] bg-[#2C2420]/10 px-3 py-1 rounded-full">EXPLAIN</span>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mb-2">Gantt Charts</h2>
+    <p class="text-stone-500 mb-8">A visual timeline tool that shows tasks, durations, and dependencies in a project plan.</p>
+
+    <div class="glass-panel rounded-2xl p-6 mb-6 stagger-1 fade-in">
+      <div class="flex items-center gap-3 mb-4">
+        <i data-lucide="bar-chart-3" class="w-5 h-5 text-[#2C2420]"></i>
+        <h4 class="font-semibold text-stone-900">Anatomy of a Gantt Chart</h4>
+      </div>
+      <div class="overflow-x-auto">
+        <div class="min-w-[600px]">
+          <!-- Header -->
+          <div class="flex border-b border-stone-200 pb-2 mb-3">
+            <div class="w-40 text-xs font-bold text-stone-500 uppercase">Task</div>
+            <div class="flex-1 flex justify-between text-xs text-stone-400">
+              <span>Wk 1</span><span>Wk 2</span><span>Wk 3</span><span>Wk 4</span><span>Wk 5</span><span>Wk 6</span>
+            </div>
+          </div>
+          <!-- Rows -->
+          <div class="space-y-2">
+            <div class="flex items-center gap-3">
+              <div class="w-40 text-xs text-stone-700 font-medium">Research & Analysis</div>
+              <div class="flex-1 bg-stone-100 rounded-full h-7 overflow-hidden">
+                <div class="gantt-bar h-full" style="width: 33%"></div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-40 text-xs text-stone-700 font-medium">Design Brief</div>
+              <div class="flex-1 bg-stone-100 rounded-full h-7 overflow-hidden">
+                <div class="gantt-bar alt h-full ml-[16%]" style="width: 17%"></div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-40 text-xs text-stone-700 font-medium">Concept Sketches</div>
+              <div class="flex-1 bg-stone-100 rounded-full h-7 overflow-hidden">
+                <div class="gantt-bar h-full ml-[33%]" style="width: 17%"></div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-40 text-xs text-stone-700 font-medium">Prototyping</div>
+              <div class="flex-1 bg-stone-100 rounded-full h-7 overflow-hidden">
+                <div class="gantt-bar accent h-full ml-[50%]" style="width: 25%"></div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-40 text-xs text-stone-700 font-medium">Testing & Evaluation</div>
+              <div class="flex-1 bg-stone-100 rounded-full h-7 overflow-hidden">
+                <div class="gantt-bar h-full ml-[67%]" style="width: 20%"></div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-40 text-xs text-stone-700 font-medium">Final Documentation</div>
+              <div class="flex-1 bg-stone-100 rounded-full h-7 overflow-hidden">
+                <div class="gantt-bar alt h-full ml-[83%]" style="width: 17%"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Legend -->
+          <div class="flex items-center gap-4 mt-4 pt-3 border-t border-stone-200">
+            <div class="flex items-center gap-1.5"><div class="w-4 h-3 bg-[#2C2420] rounded-sm"></div><span class="text-xs text-stone-500">Core task</span></div>
+            <div class="flex items-center gap-1.5"><div class="w-4 h-3 bg-[#8E8D8A] rounded-sm"></div><span class="text-xs text-stone-500">Documentation</span></div>
+            <div class="flex items-center gap-1.5"><div class="w-4 h-3 bg-[#D8C3A5] rounded-sm"></div><span class="text-xs text-stone-500">Making/Building</span></div>
+            <div class="flex items-center gap-1.5 ml-auto"><i data-lucide="arrow-right" class="w-3 h-3 text-stone-400"></i><span class="text-xs text-stone-400">Dependency flow</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4 stagger-2 fade-in">
+      <div class="glass-panel rounded-xl p-4">
+        <p class="text-xs font-bold text-green-700 uppercase mb-2">✓ Gantt Charts Show</p>
+        <ul class="text-xs text-stone-600 space-y-1">
+          <li>• Task durations and start/end dates</li>
+          <li>• Overlapping tasks (parallel work)</li>
+          <li>• Dependencies (what must finish first)</li>
+          <li>• Milestones (key checkpoints)</li>
+          <li>• Critical path at a glance</li>
+        </ul>
+      </div>
+      <div class="glass-panel rounded-xl p-4">
+        <p class="text-xs font-bold text-red-600 uppercase mb-2">✗ Gantt Charts Don't Show</p>
+        <ul class="text-xs text-stone-600 space-y-1">
+          <li>• Resource allocation (who does what)</li>
+          <li>• Budget information</li>
+          <li>• Task complexity or difficulty</li>
+          <li>• Quality metrics</li>
+          <li>• Real-time progress (static tool)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: EXPLAIN - Risk Assessment -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="2" data-phase="explain">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="session-badge-2 text-xs px-3 py-1 rounded-full font-bold">SESSION 2</span>
+      <span class="tag text-[#2C2420] bg-[#2C2420]/10 px-3 py-1 rounded-full">EXPLAIN</span>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mb-2">Risk Assessment</h2>
+    <p class="text-stone-500 mb-8">Every plan has uncertainties. Engineers systematically identify, evaluate, and mitigate risks.</p>
+
+    <div class="glass-panel rounded-2xl p-6 mb-6 stagger-1 fade-in">
+      <h4 class="font-semibold text-stone-900 mb-4">Risk = Likelihood × Impact</h4>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[500px]">
+          <thead>
+            <tr class="border-b border-stone-200">
+              <th class="text-left py-2 text-xs font-bold text-stone-500 uppercase">Risk</th>
+              <th class="text-center py-2 text-xs font-bold text-stone-500 uppercase w-20">Likelihood</th>
+              <th class="text-center py-2 text-xs font-bold text-stone-500 uppercase w-20">Impact</th>
+              <th class="text-center py-2 text-xs font-bold text-stone-500 uppercase w-20">Risk Level</th>
+              <th class="text-left py-2 text-xs font-bold text-stone-500 uppercase">Mitigation</th>
+            </tr>
+          </thead>
+          <tbody class="text-stone-700">
+            <tr class="border-b border-stone-100">
+              <td class="py-3">Sensor component unavailable</td>
+              <td class="text-center py-3"><span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">Medium</span></td>
+              <td class="text-center py-3"><span class="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full">High</span></td>
+              <td class="text-center py-3"><span class="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">HIGH</span></td>
+              <td class="py-3 text-xs">Identify 2 alternative suppliers early; order 2 weeks ahead</td>
+            </tr>
+            <tr class="border-b border-stone-100">
+              <td class="py-3">Team member absent</td>
+              <td class="text-center py-3"><span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">Medium</span></td>
+              <td class="text-center py-3"><span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">Medium</span></td>
+              <td class="text-center py-3"><span class="bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded-full">MEDIUM</span></td>
+              <td class="py-3 text-xs">Cross-train members; document all work in shared drive</td>
+            </tr>
+            <tr class="border-b border-stone-100">
+              <td class="py-3">Prototype fails safety test</td>
+              <td class="text-center py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">Low</span></td>
+              <td class="text-center py-3"><span class="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full">High</span></td>
+              <td class="text-center py-3"><span class="bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded-full">MEDIUM</span></td>
+              <td class="py-3 text-xs">Build safety testing into Week 3; have backup design ready</td>
+            </tr>
+            <tr>
+              <td class="py-3">Budget overrun</td>
+              <td class="text-center py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">Low</span></td>
+              <td class="text-center py-3"><span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">Medium</span></td>
+              <td class="text-center py-3"><span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">LOW</span></td>
+              <td class="py-3 text-xs">Add 15% contingency to budget; track spending weekly</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="glass-panel rounded-2xl p-5 stagger-2 fade-in">
+      <div class="flex items-start gap-3">
+        <i data-lucide="lightbulb" class="w-5 h-5 text-[#D8C3A5] flex-shrink-0 mt-0.5"></i>
+        <div>
+          <p class="text-sm font-semibold text-stone-900">CS Connection</p>
+          <p class="text-sm text-stone-500 mt-1">In software, risks include: scope creep, API changes, security vulnerabilities, data loss. Agile mitigates these through sprints, user stories, CI/CD, and retrospectives. Ask students: "How does a risk assessment table compare to a sprint retrospective?"</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13: EXPLAIN - Milestones & Critical Path -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="2" data-phase="explain">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="session-badge-2 text-xs px-3 py-1 rounded-full font-bold">SESSION 2</span>
+      <span class="tag text-[#2C2420] bg-[#2C2420]/10 px-3 py-1 rounded-full">EXPLAIN</span>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mb-2">Milestones & Critical Path</h2>
+    <p class="text-stone-500 mb-8">Two more essential planning concepts that keep projects on track.</p>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="glass-panel rounded-2xl p-6 stagger-1 fade-in">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-[#D8C3A5] rounded-xl flex items-center justify-center">
+            <i data-lucide="flag" class="w-5 h-5 text-white"></i>
+          </div>
+          <h4 class="font-semibold text-stone-900">Milestones</h4>
+        </div>
+        <p class="text-sm text-stone-500 mb-4">Key checkpoints that mark the completion of a major phase. They have <strong>zero duration</strong> — they're moments in time.</p>
+        <div class="space-y-2">
+          <div class="flex items-center gap-2 text-sm text-stone-700">
+            <i data-lucide="diamond" class="w-3 h-3 text-[#D8C3A5]"></i>
+            M1: Design Brief Approved
+          </div>
+          <div class="flex items-center gap-2 text-sm text-stone-700">
+            <i data-lucide="diamond" class="w-3 h-3 text-[#D8C3A5]"></i>
+            M2: Concept Design Finalized
+          </div>
+          <div class="flex items-center gap-2 text-sm text-stone-700">
+            <i data-lucide="diamond" class="w-3 h-3 text-[#D8C3A5]"></i>
+            M3: Working Prototype Complete
+          </div>
+          <div class="flex items-center gap-2 text-sm text-stone-700">
+            <i data-lucide="diamond" class="w-3 h-3 text-[#D8C3A5]"></i>
+            M4: Testing Passed & Sign-off
+          </div>
+        </div>
+        <p class="text-xs text-stone-400 mt-4 italic">CS analogy: A git tag or release version (v1.0, v2.0)</p>
+      </div>
+      <div class="glass-panel rounded-2xl p-6 stagger-2 fade-in">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-[#2C2420] rounded-xl flex items-center justify-center">
+            <i data-lucide="route" class="w-5 h-5 text-white"></i>
+          </div>
+          <h4 class="font-semibold text-stone-900">Critical Path</h4>
+        </div>
+        <p class="text-sm text-stone-500 mb-4">The <strong>longest sequence of dependent tasks</strong>. If any task on the critical path is delayed, the entire project is delayed.</p>
+        <div class="bg-white/60 rounded-xl p-4">
+          <p class="text-xs font-bold text-stone-500 uppercase mb-2">Example</p>
+          <div class="text-xs text-stone-700 space-y-1">
+            <p>Research (2 wk) → Design (1 wk) → Prototype (2 wk) → Test (1 wk)</p>
+            <p class="text-[#2C2420] font-semibold mt-2">Critical Path = 6 weeks</p>
+            <p class="text-stone-400 mt-1">Documentation (parallel) doesn't affect the path</p>
+          </div>
+        </div>
+        <p class="text-xs text-stone-400 mt-4 italic">CS analogy: The critical path is like a synchronous function call chain — if one blocks, everything blocks. Non-critical tasks are like async operations.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14: EXTEND - Worksheet -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="2" data-phase="extend">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="session-badge-2 text-xs px-3 py-1 rounded-full font-bold">SESSION 2</span>
+      <span class="tag text-[#D8C3A5] bg-[#D8C3A5]/20 px-3 py-1 rounded-full">EXTEND</span>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mb-2">Worksheet: Build a Project Plan</h2>
+    <p class="text-stone-500 mb-6">Using the same scenario from Session 1, complete all three sections. (18 minutes)</p>
+
+    <div class="space-y-4">
+      <!-- Part A: Gantt Chart -->
+      <div class="glass-panel rounded-2xl p-6 stagger-1 fade-in">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="bg-[#2C2420] text-white text-xs font-bold px-2 py-1 rounded">PART A</span>
+          <h4 class="font-semibold text-stone-900 text-sm">Gantt Chart — Plan 6 tasks across 8 weeks</h4>
+        </div>
+        <div class="overflow-x-auto">
+          <div class="min-w-[500px]">
+            <div class="flex border-b border-stone-200 pb-2 mb-2">
+              <div class="w-36 text-xs font-bold text-stone-500 uppercase">Task Name</div>
+              <div class="flex-1 flex justify-between text-xs text-stone-400">
+                <span>W1</span><span>W2</span><span>W3</span><span>W4</span><span>W5</span><span>W6</span><span>W7</span><span>W8</span>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex items-center"><div class="w-36 text-xs text-stone-500">1. ___________</div><div class="flex-1 bg-stone-100 rounded-full h-6"></div></div>
+              <div class="flex items-center"><div class="w-36 text-xs text-stone-500">2. ___________</div><div class="flex-1 bg-stone-100 rounded-full h-6"></div></div>
+              <div class="flex items-center"><div class="w-36 text-xs text-stone-500">3. ___________</div><div class="flex-1 bg-stone-100 rounded-full h-6"></div></div>
+              <div class="flex items-center"><div class="w-36 text-xs text-stone-500">4. ___________</div><div class="flex-1 bg-stone-100 rounded-full h-6"></div></div>
+              <div class="flex items-center"><div class="w-36 text-xs text-stone-500">5. ___________</div><div class="flex-1 bg-stone-100 rounded-full h-6"></div></div>
+              <div class="flex items-center"><div class="w-36 text-xs text-stone-500">6. ___________</div><div class="flex-1 bg-stone-100 rounded-full h-6"></div></div>
+            </div>
+            <p class="text-xs text-stone-400 mt-3 italic">Draw bars to show duration. Use different colors for different task types.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Part B: Risk Assessment -->
+      <div class="glass-panel rounded-2xl p-6 stagger-2 fade-in">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="bg-[#8E8D8A] text-white text-xs font-bold px-2 py-1 rounded">PART B</span>
+          <h4 class="font-semibold text-stone-900 text-sm">Risk Assessment — Identify 3 risks</h4>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-[450px]">
+            <thead><tr class="border-b border-stone-200">
+              <th class="text-left py-2 text-stone-500 font-bold">Risk</th>
+              <th class="text-center py-2 text-stone-500 font-bold w-16">L</th>
+              <th class="text-center py-2 text-stone-500 font-bold w-16">I</th>
+              <th class="text-left py-2 text-stone-500 font-bold">Mitigation Strategy</th>
+            </tr></thead>
+            <tbody>
+              <tr class="border-b border-stone-100"><td class="py-6"></td><td></td><td></td><td></td></tr>
+              <tr class="border-b border-stone-100"><td class="py-6"></td><td></td><td></td><td></td></tr>
+              <tr><td class="py-6"></td><td></td><td></td><td></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-xs text-stone-400 mt-2">L = Likelihood (Low/Med/High), I = Impact (Low/Med/High)</p>
+      </div>
+
+      <!-- Part C: Critical Path -->
+      <div class="glass-panel rounded-2xl p-6 stagger-3 fade-in">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="bg-[#D8C3A5] text-white text-xs font-bold px-2 py-1 rounded">PART C</span>
+          <h4 class="font-semibold text-stone-900 text-sm">Critical Path — Identify & justify</h4>
+        </div>
+        <div class="worksheet-line"></div>
+        <div class="worksheet-line mt-2"></div>
+        <p class="text-xs text-stone-400 mt-3 italic">Which tasks form your critical path? Why? What happens if one is delayed?</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 15: EVALUATE - Exit Ticket -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="2" data-phase="evaluate">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="session-badge-2 text-xs px-3 py-1 rounded-full font-bold">SESSION 2</span>
+      <span class="tag text-[#8E8D8A] bg-[#8E8D8A]/20 px-3 py-1 rounded-full">EVALUATE</span>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mb-2">Exit Ticket</h2>
+    <p class="text-stone-500 mb-8">Complete independently before leaving. This counts as a formative assessment.</p>
+
+    <div class="glass-panel rounded-2xl p-6 max-w-2xl mx-auto">
+      <div class="space-y-6">
+        <div class="stagger-1 fade-in">
+          <p class="text-sm font-semibold text-stone-900 mb-1">Q1. What is the difference between a design brief and a design specification?</p>
+          <div class="worksheet-line mt-2"></div>
+          <div class="worksheet-line mt-1"></div>
+          <div class="worksheet-line mt-1"></div>
+        </div>
+        <div class="stagger-2 fade-in">
+          <p class="text-sm font-semibold text-stone-900 mb-1">Q2. Rewrite this vague spec to be measurable: <em>"The robot should move fast."</em></p>
+          <div class="worksheet-line mt-2"></div>
+          <div class="worksheet-line mt-1"></div>
+        </div>
+        <div class="stagger-3 fade-in">
+          <p class="text-sm font-semibold text-stone-900 mb-1">Q3. Explain what a "critical path" is in your own words.</p>
+          <div class="worksheet-line mt-2"></div>
+          <div class="worksheet-line mt-1"></div>
+          <div class="worksheet-line mt-1"></div>
+        </div>
+        <div class="stagger-4 fade-in">
+          <p class="text-sm font-semibold text-stone-900 mb-1">Q4. Give ONE example of how project planning in engineering is similar to planning in software development.</p>
+          <div class="worksheet-line mt-2"></div>
+          <div class="worksheet-line mt-1"></div>
+          <div class="worksheet-line mt-1"></div>
+        </div>
+      </div>
+      <div class="mt-6 pt-4 border-t border-stone-200 flex items-center justify-between">
+        <p class="text-xs text-stone-400">Name: _________________________</p>
+        <p class="text-xs text-stone-400">Date: _________________________</p>
+      </div>
+    </div>
+
+    <div class="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl max-w-2xl mx-auto stagger-5 fade-in">
+      <p class="text-xs text-amber-800"><strong>📌 Teacher Note:</strong> Collect these as students leave. Use to inform Session 3 planning. Suggested grading: Q1-Q2 = 2 pts each (accuracy), Q3-Q4 = 3 pts each (depth + CS connection). Total: 10 pts formative.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 16: Homework & Mark Scheme -->
+<div class="slide flex-col items-center justify-center px-4 pt-20" data-session="0" data-phase="homework">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="bg-stone-800 text-white text-xs px-3 py-1 rounded-full font-bold">ASSIGNMENT</span>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mb-2">Homework & Mark Scheme</h2>
+    <p class="text-stone-500 mb-8">Due: Next class session | Print this section for students (or copy to Google Docs)</p>
+
+    <div class="glass-panel rounded-2xl p-6 mb-6 stagger-1 fade-in">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="font-semibold text-stone-900">Homework: Full Project Plan</h4>
+        <button onclick="copyHomeworkToClipboard()" class="flex items-center gap-1.5 bg-[#2C2420] text-white text-xs px-4 py-2 rounded-lg hover:bg-stone-800 transition-all">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          Copy Text for Google Docs
+        </button>
+      </div>
+      
+      <div id="homeworkContent" class="bg-white/70 rounded-xl p-6 text-sm text-stone-700 leading-relaxed space-y-4 border border-stone-200">
+        <div class="text-center border-b border-stone-200 pb-4">
+          <p class="font-bold text-stone-900 text-base">Engineering Design – Unit 2: Planning</p>
+          <p class="text-xs text-stone-500">Homework Assignment | Name: _____________________ | Date: _______________</p>
+        </div>
+        
+        <div>
+          <p class="font-bold text-stone-900">Scenario:</p>
+          <p class="mt-1">Design a <strong>smart locker system</strong> for a school that allows students to securely store and charge their laptops using RFID cards. The school has 500 students, a budget of $5,000, and needs it installed within 10 weeks.</p>
+        </div>
+
+        <div>
+          <p class="font-bold text-stone-900">Task 1: Design Brief (6 marks)</p>
+          <p class="text-xs text-stone-500 mb-2">Write a complete design brief for this project. Include: problem statement, client, deliverable, and scope/constraints.</p>
+          <div class="worksheet-line"></div>
+          <div class="worksheet-line mt-1"></div>
+          <div class="worksheet-line mt-1"></div>
+          <div class="worksheet-line mt-1"></div>
+          <div class="worksheet-line mt-1"></div>
+          <div class="worksheet-line mt-1"></div>
+        </div>
+
+        <div>
+          <p class="font-bold text-stone-900">Task 2: Specifications Table (8 marks)</p>
+          <p class="text-xs text-stone-500 mb-2">Write 4 design specs and 4 performance specs. Each must be measurable.</p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs border border-stone-200 rounded">
+              <thead><tr class="bg-stone-100"><th class="text-left p-2 border border-stone-200 w-1/4">Type</th><th class="text-left p-2 border border-stone-200">Specification</th><th class="text-left p-2 border border-stone-200 w-1/4">How to Test</th></tr></thead>
+              <tbody>
+                <tr><td class="p-2 border border-stone-200 text-stone-500">Design</td><td class="p-2 border border-stone-200"></td><td class="p-2 border border-stone-200"></td></tr>
+                <tr><td class="p-2 border border-stone-200 text-stone-500">Design</td><td class="p-2 border border-stone-200"></td><td class="p-2 border border-stone-200"></td></tr>
+                <tr><td class="p-2 border border-stone-200 text-stone-500">Design</td><td class="p-2 border border-stone-200"></td><td class="p-2 border border-stone-200"></td></tr>
+                <tr><td class="p-2 border border-stone-200 text-stone-500">Design</td><td class="p-2 border border-stone-200"></td><td class="p-2 border border-stone-200"></td></tr>
+                <tr><td class="p-2 border border-stone-200 text-stone-500">Performance</td><td class="p-2 border border-stone-200"></td><td class="p-2 border border-stone-200"></td></tr>
+                <tr><td class="p-2 border border-stone-200 text-stone-500">Performance</td><td class="p-2 border border-stone-200"></td><td class="p-2 border border-stone-200"></td></tr>
+                <tr><td class="p-2 border border-stone-200 text-stone-500">Performance</td><td class="p-2 border border-stone-200"></td><td class="p-2 border border-stone-200"></td></tr>
+                <tr><td class="p-2 border border-stone-200 text-stone-500">Performance</td><td class="p-2 border border-stone-200"></td><td class="p-2 border border-stone-200"></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <p class="font-bold text-stone-900">Task 3: Gantt Chart (6 marks)</p>
+          <p class="text-xs text-stone-500 mb-2">Create a Gantt chart with at least 8 tasks across 10 weeks. Mark at least 2 milestones with ◆.</p>
+          <div class="worksheet-line"></div>
+          <div class="worksheet-line mt-1"></div>
+          <div class="worksheet-line mt-1"></div>
+          <div class="worksheet-line mt-1"></div>
+          <p class="text-xs text-stone-400 italic mt-1">(You may draw this on graph paper or use a digital tool — attach separately if digital)</p>
+        </div>
+
+        <div>
+          <p class="font-bold text-stone-900">Task 4: Risk Assessment (5 marks)</p>
+          <p class="text-xs text-stone-500 mb-2">Identify 3 risks with likelihood, impact, and mitigation strategies.</p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs border border-stone-200 rounded">
+              <thead><tr class="bg-stone-100"><th class="text-left p-2 border border-stone-200">Risk</th><th class="text-center p-2 border border-stone-200 w-14">L</th><th class="text-center p-2 border border-stone-200 w-14">I</th><th class="text-left p-2 border border-stone-200">Mitigation</th></tr></thead>
+              <tbody>
+                <tr><td class="p-3 border border-stone-200"></td><td class="p-3 border border-stone-200 text-center"></td><td class="p-3 border border-stone-200 text-center"></td><td class="p-3 border border-stone-200"></td></tr>
+                <tr><td class="p-3 border border-stone-200"></td><td class="p-3 border border-stone-200 text-center"></td><td class="p-3 border border-stone-200 text-center"></td><td class="p-3 border border-stone-200"></td></tr>
+                <tr><td class="p-3 border border-stone-200"></td><td class="p-3 border border-stone-200 text-center"></td><td class="p-3 border border-stone-200 text-center"></td><td class="p-3 border border-stone-200"></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <p class="font-bold text-stone-900">Task 5: Critical Path (5 marks)</p>
+          <p class="text-xs text-stone-500 mb-2">Identify the critical path from your Gantt chart. Explain why these tasks are critical and what would happen if one is delayed by 1 week.</p>
+          <div class="worksheet-line"></div>
+          <div class="worksheet-line mt-1"></div>
+          <div class="worksheet-line mt-1"></div>
+          <div class="worksheet-line mt-1"></div>
+        </div>
+
+        <div class="text-center text-xs text-stone-400 pt-4 border-t border-stone-200">
+          <p>Total: 30 marks | Due: Next class</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mark Scheme -->
+    <div class="glass-panel rounded-2xl p-6 stagger-2 fade-in">
+      <button onclick="toggleMarkScheme()" class="flex items-center gap-2 text-sm font-semibold text-stone-900 w-full justify-between">
+        <span>📋 Mark Scheme (Click to reveal)</span>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-stone-400 transition-transform" id="markSchemeArrow"></i>
+      </button>
+      <div class="reveal-answer" id="markSchemeContent">
+        <div class="mt-4 text-sm text-stone-700 space-y-4 border-t border-stone-200 pt-4">
+          <div>
+            <p class="font-semibold text-stone-900">Task 1: Design Brief (6 marks)</p>
+            <ul class="text-xs text-stone-600 mt-1 space-y-0.5 ml-4 list-disc">
+              <li>Clear problem statement (2 marks) — identifies the specific need</li>
+              <li>Client identified with context (1 mark)</li>
+              <li>Deliverable clearly described (1 mark)</li>
+              <li>Scope/constraints included (budget, timeline, materials) (2 marks)</li>
+            </ul>
+          </div>
+          <div>
+            <p class="font-semibold text-stone-900">Task 2: Specifications (8 marks — 1 per spec)</p>
+            <ul class="text-xs text-stone-600 mt-1 space-y-0.5 ml-4 list-disc">
+              <li>1 mark each for a correct, measurable spec with a valid test method</li>
+              <li>Half mark if spec is present but not fully measurable</li>
+              <li>Zero if vague ("should be secure") or wrong type (design spec in performance column)</li>
+            </ul>
+          </div>
+          <div>
+            <p class="font-semibold text-stone-900">Task 3: Gantt Chart (6 marks)</p>
+            <ul class="text-xs text-stone-600 mt-1 space-y-0.5 ml-4 list-disc">
+              <li>≥ 8 tasks shown (2 marks)</li>
+              <li>Durations are realistic and proportional (2 marks)</li>
+              <li>At least 2 milestones marked (1 mark)</li>
+              <li>At least one dependency shown (task B starts after A) (1 mark)</li>
+            </ul>
+          </div>
+          <div>
+            <p class="font-semibold text-stone-900">Task 4: Risk Assessment (5 marks)</p>
+            <ul class="text-xs text-stone-600 mt-1 space-y-0.5 ml-4 list-disc">
+              <li>3 relevant risks identified (1.5 marks — 0.5 each)</li>
+              <li>Likelihood and impact rated reasonably (1 mark)</li>
+              <li>Practical, specific mitigation strategies (2.5 marks — nearly 1 each)</li>
+            </ul>
+          </div>
+          <div>
+            <p class="font-semibold text-stone-900">Task 5: Critical Path (5 marks)</p>
+            <ul class="text-xs text-stone-600 mt-1 space-y-0.5 ml-4 list-disc">
+              <li>Correctly identifies the longest dependent chain (2 marks)</li>
+              <li>Explains WHY it's critical (1 mark)</li>
+              <li>Correctly describes the impact of a 1-week delay (2 marks)</li>
+            </ul>
+          </div>
+          <div class="bg-stone-100 rounded-lg p-3 mt-3">
+            <p class="text-xs text-stone-600"><strong>Grade Boundaries:</strong> 27-30 = A | 22-26 = B | 17-21 = C | 12-16 = D | &lt;12 = Not yet passing</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 17: References & Resources -->
+<div class="slide flex-col items-center justify-center px-4 pt-20 pb-12" data-session="0" data-phase="resources">
+  <div class="max-w-4xl mx-auto w-full fade-in">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="bg-stone-200 text-stone-600 text-xs px-3 py-1 rounded-full font-bold">RESOURCES</span>
+    </div>
+    <h2 class="text-3xl md:text-4xl font-semibold text-stone-900 tracking-tight mb-8">References & Additional Resources</h2>
+
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="glass-panel glass-card rounded-2xl p-5 stagger-1 fade-in">
+        <div class="flex items-center gap-2 mb-3">
+          <i data-lucide="play-circle" class="w-5 h-5 text-[#2C2420]"></i>
+          <h4 class="font-semibold text-stone-900 text-sm">Videos</h4>
+        </div>
+        <ul class="space-y-2 text-xs text-stone-600">
+          <li><a href="https://www.youtube.com/watch?v=Qe2wHCB6g8E" target="_blank" class="text-[#2C2420] underline underline-offset-2 hover:text-stone-600 transition-colors">Engineering Fails — Poor Planning</a></li>
+          <li><a href="https://www.youtube.com/watch?v=i_q-fYz2dJg" target="_blank" class="text-[#2C2420] underline underline-offset-2 hover:text-stone-600 transition-colors">Gantt Charts Explained — Project Management</a></li>
+          <li><a href="https://www.youtube.com/watch?v=vjEo4VgKgf8" target="_blank" class="text-[#2C2420] underline underline-offset-2 hover:text-stone-600 transition-colors">Denver Airport: Automated Baggage Failure</a></li>
+          <li><a href="https://www.youtube.com/watch?v=XU0llRltyFM" target="_blank" class="text-[#2C2420] underline underline-offset-2 hover:text-stone-600 transition-colors">Design Process — PBS Design Squad</a></li>
+        </ul>
+      </div>
+
+      <div class="glass-panel glass-card rounded-2xl p-5 stagger-2 fade-in">
+        <div class="flex items-center gap-2 mb-3">
+          <i data-lucide="globe" class="w-5 h-5 text-[#2C2420]"></i>
+          <h4 class="font-semibold text-stone-900 text-sm">Interactive Tools</h4>
+        </div>
+        <ul class="space-y-2 text-xs text-stone-600">
+          <li><a href="https://www.teamgantt.com/" target="_blank" class="text-[#2C2420] underline underline-offset-2 hover:text-stone-600 transition-colors">TeamGantt — Free Gantt chart maker</a></li>
+          <li><a href="https://www.canva.com/templates/search/gantt-chart/" target="_blank" class="text-[#2C2420] underline underline-offset-2 hover:text-stone-600 transition-colors">Canva Gantt Chart Templates</a></li>
+          <li><a href="https://docs.google.com/spreadsheets" target="_blank" class="text-[#2C2420] underline underline-offset-2 hover:text-stone-600 transition-colors">Google Sheets — Build your own Gantt</a></li>
+          <li><a href="https://www.miro.com/templates/gantt-chart/" target="_blank" class="text-[#2C2420] underline underline-offset-2 hover:text-stone-600 transition-colors">Miro — Collaborative Gantt templates</a></li>
+        </ul>
+      </div>
+
+      <div class="glass-panel glass-card rounded-2xl p-5 stagger-3 fade-in">
+        <div class="flex items-center gap-2 mb-3">
+          <i data-lucide="book-open" class="w-5 h-5 text-[#2C2420]"></i>
+          <h4 class="font-semibold text-stone-900 text-sm">Curriculum References</h4>
+        </div>
+        <ul class="space-y-2 text-xs text-stone-600">
+          <li>IB MYP Design — Criterion B: Developing Ideas (Planning)</li>
+          <li>IGCSE Design & Technology — Section 2: Design Considerations</li>
+          <li>NGSS HS-ETS1-2: Design a solution to a complex problem</li>
+          <li>AP CSP — Computational Thinking Practices (especially Practice 3)</li>
+          <li>Cambridge International AS & Level Design & Technology (9705) — Unit 2</li>
+        </ul>
+      </div>
+
+      <div class="glass-panel glass-card rounded-2xl p-5 stagger-4 fade-in">
+        <div class="flex items-center gap-2 mb-3">
+          <i data-lucide="download" class="w-5 h-5 text-[#2C2420]"></i>
+          <h4 class="font-semibold text-stone-900 text-sm">For the Teacher</h4>
+        </div>
+        <ul class="space-y-2 text-xs text-stone-600">
+          <li><a href="https://docs.google.com/document/d/create" target="_blank" class="text-[#2C2420] underline underline-offset-2 hover:text-stone-600 transition-colors">Create Google Doc for Homework →</a></li>
+          <li>Use "Copy Text" button on previous slide to paste homework</li>
+          <li>Print Worksheet slides (14-15) for in-class use</li>
+          <li>Exit ticket (slide 15) — print 1 per student</li>
+          <li>Differentiation: Provide sentence starters for ELL/IEP students</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="glass-panel rounded-2xl p-6 mt-6 stagger-5 fade-in border-l-4 border-[#D8C3A5]">
+      <h4 class="font-semibold text-stone-900 text-sm mb-2">💡 Suggested Extensions for Future Lessons</h4>
+      <div class="flex flex-wrap gap-2 text-xs">
+        <span class="bg-stone-200 text-stone-700 px-3 py-1.5 rounded-full">PERT Charts vs. Gantt</span>
+        <span class="bg-stone-200 text-stone-700 px-3 py-1.5 rounded-full">Agile vs. Waterfall Planning</span>
+        <span class="bg-stone-200 text-stone-700 px-3 py-1.5 rounded-full">Budget Planning & BOM</span>
+        <span class="bg-stone-200 text-stone-700 px-3 py-1.5 rounded-full">Stakeholder Analysis</span>
+        <span class="bg-stone-200 text-stone-700 px-3 py-1.5 rounded-full">Ethical Considerations in Planning</span>
+        <span class="bg-stone-200 text-stone-700 px-3 py-1.5 rounded-full">Using AI Tools for Project Planning</span>
+      </div>
+    </div>
+
+    <div class="text-center mt-10 stagger-6 fade-in">
+      <p class="text-stone-400 text-sm">Made with care for your first Engineering Design class 🎉</p>
+      <p class="text-stone-300 text-xs mt-1">Press <kbd class="px-1.5 py-0.5 bg-stone-200 rounded text-stone-500 font-mono text-[10px]">H</kbd> for keyboard shortcuts</p>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast"></div>
+
+<!-- Keyboard Shortcuts Modal -->
+<div class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/30 backdrop-blur-sm" id="shortcutsModal" onclick="if(event.target===this)closeShortcuts()">
+  <div class="glass-panel rounded-2xl p-6 max-w-sm mx-4 bg-white/90">
+    <h3 class="font-semibold text-stone-900 mb-4">Keyboard Shortcuts</h3>
+    <div class="space-y-2 text-sm">
+      <div class="flex justify-between"><span class="text-stone-600">Next slide</span><kbd class="px-2 py-0.5 bg-stone-200 rounded text-xs font-mono">→</kbd></div>
+      <div class="flex justify-between"><span class="text-stone-600">Previous slide</span><kbd class="px-2 py-0.5 bg-stone-200 rounded text-xs font-mono">←</kbd></div>
+      <div class="flex justify-between"><span class="text-stone-600">First slide</span><kbd class="px-2 py-0.5 bg-stone-200 rounded text-xs font-mono">Home</kbd></div>
+      <div class="flex justify-between"><span class="text-stone-600">Last slide</span><kbd class="px-2 py-0.5 bg-stone-200 rounded text-xs font-mono">End</kbd></div>
+      <div class="flex justify-between"><span class="text-stone-600">Session 1 only</span><kbd class="px-2 py-0.5 bg-stone-200 rounded text-xs font-mono">1</kbd></div>
+      <div class="flex justify-between"><span class="text-stone-600">Session 2 only</span><kbd class="px-2 py-0.5 bg-stone-200 rounded text-xs font-mono">2</kbd></div>
+      <div class="flex justify-between"><span class="text-stone-600">Show all slides</span><kbd class="px-2 py-0.5 bg-stone-200 rounded text-xs font-mono">0</kbd></div>
+      <div class="flex justify-between"><span class="text-stone-600">This help</span><kbd class="px-2 py-0.5 bg-stone-200 rounded text-xs font-mono">H</kbd></div>
+      <div class="flex justify-between"><span class="text-stone-600">Fullscreen</span><kbd class="px-2 py-0.5 bg-stone-200 rounded text-xs font-mono">F</kbd></div>
+    </div>
+    <button onclick="closeShortcuts()" class="mt-4 w-full bg-[#2C2420] text-white text-sm py-2 rounded-lg hover:bg-stone-800 transition-all">Close</button>
+  </div>
+</div>
+
+<script>
+  // Initialize Lucide icons
+  lucide.createIcons();
+
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentSlide = 0;
+  let currentFilter = 0; // 0 = all, 1 = session 1, 2 = session 2
+  let filteredSlides = [...Array(totalSlides).keys()];
+
+  function getFilteredSlides() {
+    if (currentFilter === 0) return [...Array(totalSlides).keys()];
+    return [...Array(totalSlides).keys()].filter(i => {
+      const session = parseInt(slides[i].dataset.session);
+      return session === 0 || session === currentFilter;
+    });
+  }
+
+  function updateSlide() {
+    filteredSlides = getFilteredSlides();
+    slides.forEach(s => s.classList.remove('active'));
+    slides[filteredSlides[currentSlide]].classList.add('active');
+    
+    // Update progress
+    const progress = ((currentSlide + 1) / filteredSlides.length) * 100;
+    document.getElementById('progressBar').style.width = progress + '%';
+    
+    // Update counter
+    document.getElementById('slideCounter').textContent = `${currentSlide + 1} / ${filteredSlides.length}`;
+    
+    // Update dots
+    updateDots();
+    
+    // Re-trigger animations
+    const activeSlide = slides[filteredSlides[currentSlide]];
+    activeSlide.querySelectorAll('.fade-in').forEach(el => {
+      el.style.animation = 'none';
+      el.offsetHeight;
+      el.style.animation = '';
+    });
+  }
+
+  function updateDots() {
+    const container = document.getElementById('navDots');
+    container.innerHTML = '';
+    filteredSlides.forEach((slideIdx, i) => {
+      const dot = document.createElement('div');
+      dot.className = `nav-dot ${i === currentSlide ? 'active' : ''}`;
+      dot.onclick = () => { currentSlide = i; updateSlide(); };
+      container.appendChild(dot);
+    });
+  }
+
+  function nextSlide() {
+    if (currentSlide < filteredSlides.length - 1) {
+      currentSlide++;
+      updateSlide();
+    }
+  }
+
+  function prevSlide() {
+    if (currentSlide > 0) {
+      currentSlide--;
+      updateSlide();
+    }
+  }
+
+  function toggleSessionView() {
+    currentFilter = (currentFilter + 1) % 3;
+    const labels = ['All Slides', 'Session 1', 'Session 2'];
+    const colors = ['bg-stone-200', 'session-badge-1', 'session-badge-2'];
+    const btn = document.getElementById('sessionToggle');
+    btn.textContent = labels[currentFilter];
+    btn.className = `text-xs ${colors[currentFilter]} px-3 py-1.5 rounded-lg transition-all font-medium text-white`;
+    currentSlide = 0;
+    updateSlide();
+    showToast(`Showing: ${labels[currentFilter]}`);
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+    if (e.key === 'Home') { e.preventDefault(); currentSlide = 0; updateSlide(); }
+    if (e.key === 'End') { e.preventDefault(); currentSlide = filteredSlides.length - 1; updateSlide(); }
+    if (e.key === '1') { currentFilter = 1; currentSlide = 0; document.getElementById('sessionToggle').textContent = 'Session 1'; document.getElementById('sessionToggle').className = 'text-xs session-badge-1 px-3 py-1.5 rounded-lg transition-all font-medium text-white'; updateSlide(); showToast('Showing: Session 1'); }
+    if (e.key === '2') { currentFilter = 2; currentSlide = 0; document.getElementById('sessionToggle').textContent = 'Session 2'; document.getElementById('sessionToggle').className = 'text-xs session-badge-2 px-3 py-1.5 rounded-lg transition-all font-medium text-white'; updateSlide(); showToast('Showing: Session 2'); }
+    if (e.key === '0') { currentFilter = 0; currentSlide = 0; document.getElementById('sessionToggle').textContent = 'All Slides'; document.getElementById('sessionToggle').className = 'text-xs bg-stone-200 hover:bg-stone-300 px-3 py-1.5 rounded-lg transition-all font-medium'; updateSlide(); showToast('Showing: All Slides'); }
+    if (e.key === 'h' || e.key === 'H') { document.getElementById('shortcutsModal').classList.toggle('hidden'); document.getElementById('shortcutsModal').classList.toggle('flex'); }
+    if (e.key === 'f' || e.key === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+  });
+
+  // Touch/swipe support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) { diff > 0 ? nextSlide() : prevSlide(); }
+  });
+
+  // Quiz functionality
+  function answerQuiz(btn, answer) {
+    const item = btn.closest('.quiz-item');
+    const correct = item.dataset.answer === String(answer);
+    const buttons = item.querySelectorAll('.quiz-btn');
+    buttons.forEach(b => { b.disabled = true; b.style.opacity = '0.5'; });
+    btn.style.opacity = '1';
+    btn.style.transform = 'scale(1.05)';
+    if (correct) {
+      btn.classList.add('ring-2', 'ring-green-400');
+    } else {
+      btn.classList.add('ring-2', 'ring-red-400');
+      // Highlight correct
+      buttons.forEach(b => {
+        const isCorrectBtn = (b.textContent === 'TRUE' && item.dataset.answer === 'true') || (b.textContent === 'FALSE' && item.dataset.answer === 'false');
+        if (isCorrectBtn) { b.style.opacity = '1'; b.classList.add('ring-2', 'ring-green-400'); }
+      });
+    }
+    
+    // Check if all answered
+    const allAnswered = [...document.querySelectorAll('.quiz-item')].every(qi => qi.querySelectorAll('.quiz-btn[disabled]').length === 2);
+    if (allAnswered) {
+      const correctCount = [...document.querySelectorAll('.quiz-item')].filter(qi => {
+        const disabledBtns = qi.querySelectorAll('.quiz-btn[disabled]');
+        const clicked = [...disabledBtns].find(b => b.style.opacity === '1' && b.classList.contains('ring-green-400'));
+        return !!clicked;
+      }).length;
+      document.getElementById('quizFeedback').innerHTML = `<span class="font-semibold">${correctCount}/5</span> correct! ${correctCount === 5 ? '🎉 Perfect!' : correctCount >= 3 ? '👍 Good recall!' : 'Let\'s review these concepts again.'}`;
+    }
+  }
+
+  // Scenario selection
+  function selectScenario(el, letter) {
+    document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('border-[#D8C3A5]'));
+    el.classList.add('border-[#D8C3A5]');
+    showToast(`Scenario ${letter} selected`);
+  }
+
+  // Mark scheme toggle
+  function toggleMarkScheme() {
+    const content = document.getElementById('markSchemeContent');
+    const arrow = document.getElementById('markSchemeArrow');
+    content.classList.toggle('open');
+    arrow.style.transform = content.classList.contains('open') ? 'rotate(180deg)' : '';
+  }
+
+  // Copy homework to clipboard
+  function copyHomeworkToClipboard() {
+    const content = document.getElementById('homeworkContent');
+    const text = content.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('✅ Copied! Paste into Google Docs to create your homework handout.');
+    }).catch(() => {
+      // Fallback
+      const range = document.createRange();
+      range.selectNode(content);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+      showToast('Text selected — use Ctrl+C to copy, then paste into Google Docs.');
+    });
+  }
+
+  // Toast notification
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // Close shortcuts modal
+  function closeShortcuts() {
+    document.getElementById('shortcutsModal').classList.add('hidden');
+    document.getElementById('shortcutsModal').classList.remove('flex');
+  }
+
+  // Initialize
+  updateSlide();
+</script>
+
+</body>
+</html>
