@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Addition & Overflow — CS Discovery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Manrope', 'sans-serif'] },
+                    colors: {
+                        gold: { 100:'#FDEebb', 300:'#F2C94C', 400:'#FFD369', 500:'#E6B800', 600:'#B38F00' },
+                        charcoal: { 800:'#1A1A1A', 900:'#0F0F0F', 950:'#050505' }
+                    },
+                    backgroundImage: {
+                        'gold-gradient': 'linear-gradient(135deg, #F2C94C 0%, #E6B800 100%)',
+                        'dark-gradient': 'linear-gradient(to bottom, #111111, #050505)',
+                        'cinematic-fade': 'radial-gradient(circle at center, rgba(242,201,76,0.08) 0%, transparent 70%)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::selection { background: rgba(242, 201, 76, 0.2); color: #FFD369; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        .noise-bg {
+            position: fixed; inset: 0; pointer-events: none; z-index: 50; opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+
+        .slide { display: none; animation: fadeIn 0.5s ease-out; }
+        .slide.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        .binary-bit {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 48px; height: 56px; font-size: 1.5rem; font-weight: 700;
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+            background: rgba(255,255,255,0.03); font-family: 'Courier New', monospace;
+        }
+        .binary-bit.carry { border-color: rgba(242,201,76,0.4); color: #F2C94C; font-size: 1rem; height: 36px; width: 48px; }
+        .binary-bit.result { border-color: rgba(242,201,76,0.6); background: rgba(242,201,76,0.08); color: #FFD369; }
+        .binary-bit.overflow-bit { border-color: rgba(239,68,68,0.6); background: rgba(239,68,68,0.12); color: #f87171; }
+
+        .answer-reveal { cursor: pointer; transition: all 0.3s; }
+        .answer-reveal .answer { opacity: 0; max-height: 0; overflow: hidden; transition: all 0.4s ease; }
+        .answer-reveal.revealed .answer { opacity: 1; max-height: 500px; }
+        .answer-reveal .reveal-hint { transition: opacity 0.3s; }
+        .answer-reveal.revealed .reveal-hint { opacity: 0; position: absolute; pointer-events: none; }
+
+        .rule-card { transition: all 0.3s ease; }
+        .rule-card:hover { border-color: rgba(242,201,76,0.4); transform: translateY(-2px); }
+
+        .phase-badge {
+            font-size: 0.65rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;
+            padding: 4px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .phase-engage { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+        .phase-explore { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+        .phase-explain { background: rgba(242,201,76,0.15); color: #F2C94C; border: 1px solid rgba(242,201,76,0.3); }
+        .phase-extend { background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); }
+        .phase-evaluate { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+
+        .timer-ring { transition: stroke-dashoffset 1s linear; }
+
+        @media print {
+            .no-print { display: none !important; }
+            .slide { display: flex !important; page-break-after: always; }
+            body { background: white !important; color: black !important; }
+            .print-white { background: white !important; color: black !important; border-color: #ddd !important; }
+        }
+
+        .homework-section {
+            border: 2px dashed rgba(242,201,76,0.3); border-radius: 16px;
+            padding: 2rem; background: rgba(242,201,76,0.03);
+        }
+        .homework-lines {
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            min-height: 80px; margin-bottom: 1rem;
+        }
+        .homework-grid-lines {
+            display: grid; grid-template-columns: repeat(8, 1fr); gap: 0;
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; overflow: hidden;
+        }
+        .homework-grid-lines .cell {
+            aspect-ratio: 1; border-right: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Courier New', monospace; font-size: 1.1rem;
+        }
+        .homework-grid-lines .cell:last-child { border-right: none; }
+        .homework-grid-lines .cell.empty { background: rgba(255,255,255,0.02); }
+        .homework-grid-lines .cell.label {
+            background: rgba(242,201,76,0.08); color: #F2C94C;
+            font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em;
+        }
+        .homework-grid-lines .row-label {
+            grid-column: 1 / -1; display: flex; align-items: center; gap: 8px;
+            padding: 6px 12px; background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            font-size: 0.8rem; color: rgba(255,255,255,0.6);
+        }
+    </style>
+</head>
+<body class="bg-charcoal-950 text-white font-sans min-h-screen overflow-hidden">
+    <div class="noise-bg"></div>
+
+    <!-- Top Bar -->
+    <div class="no-print fixed top-0 left-0 right-0 z-40 px-6 py-4 flex items-center justify-between" style="background: linear-gradient(to bottom, rgba(5,5,5,0.95), transparent);">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gold-gradient flex items-center justify-center">
+                <iconify-icon icon="lucide:cpu" width="16" class="text-charcoal-900"></iconify-icon>
+            </div>
+            <span class="text-sm font-medium text-neutral-400">CS Discovery — IGCSE Cambridge</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <span id="slideCounter" class="text-sm font-medium text-neutral-500">1 / 15</span>
+            <button onclick="toggleFullscreen()" class="text-neutral-500 hover:text-gold-300 transition-colors" title="Fullscreen">
+                <iconify-icon icon="lucide:maximize" width="18"></iconify-icon>
+            </button>
+        </div>
+    </div>
+
+    <!-- Slide Container -->
+    <div id="slideContainer" class="relative w-full h-screen">
+
+        <!-- ==================== SLIDE 1: TITLE ==================== -->
+        <div class="slide active flex-col items-center justify-center h-full px-6" data-slide="1">
+            <div class="absolute inset-0 bg-cinematic-fade"></div>
+            <div class="relative z-10 text-center max-w-4xl mx-auto">
+                <div class="phase-badge phase-explain mb-6">
+                    <iconify-icon icon="lucide:book-open" width="12"></iconify-icon>
+                    Chapter Lesson
+                </div>
+                <h1 class="text-5xl lg:text-7xl font-semibold tracking-tighter leading-[1.1] mb-6">
+                    Binary Addition<br>
+                    <span class="bg-clip-text text-transparent bg-gold-gradient">& Overflow</span>
+                </h1>
+                <p class="text-neutral-400 font-light text-lg leading-relaxed max-w-2xl mx-auto mb-8">
+                    Understanding how computers perform arithmetic with binary numbers — and what happens when things go wrong.
+                </p>
+                <div class="flex flex-wrap items-center justify-center gap-4 text-sm text-neutral-500">
+                    <span class="flex items-center gap-2"><iconify-icon icon="lucide:clock" width="14"></iconify-icon> 45 minutes</span>
+                    <span class="w-1 h-1 rounded-full bg-neutral-700"></span>
+                    <span class="flex items-center gap-2"><iconify-icon icon="lucide:layers" width="14"></iconify-icon> IGCSE 0478</span>
+                    <span class="w-1 h-1 rounded-full bg-neutral-700"></span>
+                    <span class="flex items-center gap-2"><iconify-icon icon="lucide:target" width="14"></iconify-icon> 5E Lesson Plan</span>
+                </div>
+                <div class="mt-12 animate-bounce text-neutral-600">
+                    <iconify-icon icon="lucide:arrow-down" width="24"></iconify-icon>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SLIDE 2: LESSON OBJECTIVE ==================== -->
+        <div class="slide flex-col items-center justify-center h-full px-6" data-slide="2">
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <div class="phase-badge phase-explain mb-6">
+                    <iconify-icon icon="lucide:target" width="12"></iconify-icon>
+                    Lesson Objective
+                </div>
+                <h2 class="text-3xl lg:text-5xl font-semibold tracking-tight mb-10">What You Will Learn</h2>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="rule-card p-6 rounded-xl border border-white/10 bg-white/[0.03]">
+                        <div class="w-10 h-10 rounded-lg bg-gold-500/10 flex items-center justify-center mb-4">
+                            <iconify-icon icon="lucide:plus" width="20" class="text-gold-400"></iconify-icon>
+                        </div>
+                        <h3 class="font-medium mb-2">Binary Addition Rules</h3>
+                        <p class="text-sm text-neutral-400 font-light leading-relaxed">Apply the four fundamental rules of binary addition to add two binary numbers together.</p>
+                    </div>
+                    <div class="rule-card p-6 rounded-xl border border-white/10 bg-white/[0.03]">
+                        <div class="w-10 h-10 rounded-lg bg-gold-500/10 flex items-center justify-center mb-4">
+                            <iconify-icon icon="lucide:arrow-right" width="20" class="text-gold-400"></iconify-icon>
+                        </div>
+                        <h3 class="font-medium mb-2">Carry Propagation</h3>
+                        <p class="text-sm text-neutral-400 font-light leading-relaxed">Understand how carry bits are generated and propagated through each column of a binary addition.</p>
+                    </div>
+                    <div class="rule-card p-6 rounded-xl border border-white/10 bg-white/[0.03]">
+                        <div class="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center mb-4">
+                            <iconify-icon icon="lucide:alert-triangle" width="20" class="text-red-400"></iconify-icon>
+                        </div>
+                        <h3 class="font-medium mb-2">Overflow Concept</h3>
+                        <p class="text-sm text-neutral-400 font-light leading-relaxed">Define overflow and explain when it occurs in binary addition within a fixed number of bits.</p>
+                    </div>
+                    <div class="rule-card p-6 rounded-xl border border-white/10 bg-white/[0.03]">
+                        <div class="w-10 h-10 rounded-lg bg-gold-500/10 flex items-center justify-center mb-4">
+                            <iconify-icon icon="lucide:search" width="20" class="text-gold-400"></iconify-icon>
+                        </div>
+                        <h3 class="font-medium mb-2">Detecting Overflow</h3>
+                        <p class="text-sm text-neutral-400 font-light leading-relaxed">Identify when an overflow error has occurred by examining the result and carry bits.</p>
+                    </div>
+                </div>
+                <div class="mt-8 p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                    <p class="text-sm text-neutral-400"><span class="text-gold-400 font-medium">IGCSE Syllabus Reference:</span> Section 1.2 — Data Representation: Binary addition and overflow</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SLIDE 3: ENGAGE — STARTER ==================== -->
+        <div class="slide flex-col items-center justify-center h-full px-6" data-slide="3">
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <div class="phase-badge phase-engage mb-6">
+                    <iconify-icon icon="lucide:zap" width="12"></iconify-icon>
+                    Engage — Starter Activity
+                </div>
+                <h2 class="text-3xl lg:text-5xl font-semibold tracking-tight mb-8">Think About It...</h2>
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <div>
+                        <div class="rounded-xl overflow-hidden border border-white/10 mb-4">
+                            <iframe width="100%" height="220" src="https://www.youtube.com/embed/LkPRQ7i9Gyc?rel=0" title="Binary Addition Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full"></iframe>
+                        </div>
+                        <p class="text-xs text-neutral-500">Video: "Binary Addition Explained" — Alternatively search: <em>IGCSE binary addition</em></p>
+                        <div class="mt-4 p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
+                            <p class="text-xs text-blue-300"><iconify-icon icon="lucide:info" width="12" class="mr-1"></iconify-icon> If video doesn't load, use: <a href="https://www.youtube.com/results?search_query=igcse+binary+addition+explained" target="_blank" class="underline hover:text-blue-200">YouTube Search → IGCSE Binary Addition</a></p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="p-5 rounded-xl bg-white/[0.03] border border-white/10">
+                            <p class="font-medium mb-3 flex items-center gap-2"><iconify-icon icon="lucide:help-circle" width="18" class="text-gold-400"></iconify-icon> Discussion Question</p>
+                            <p class="text-neutral-300 font-light leading-relaxed">In decimal, 9 + 1 = 10. We write <strong class="text-white">0</strong> and <strong class="text-gold-400">carry the 1</strong>.</p>
+                            <p class="text-neutral-300 font-light leading-relaxed mt-2">What do you think happens in binary when we add 1 + 1?</p>
+                        </div>
+                        <div class="p-5 rounded-xl bg-white/[0.03] border border-white/10">
+                            <p class="font-medium mb-3 flex items-center gap-2"><iconify-icon icon="lucide:brain" width="18" class="text-gold-400"></iconify-icon> Quick Challenge</p>
+                            <p class="text-neutral-400 text-sm mb-3">Without knowing the rules yet — try these:</p>
+                            <div class="space-y-2 font-mono text-lg">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-neutral-300">0 + 0 = ?</span>
+                                    <span class="text-neutral-600 text-sm">→</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-neutral-300">0 + 1 = ?</span>
+                                    <span class="text-neutral-600 text-sm">→</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-neutral-300">1 + 1 = ?</span>
+                                    <span class="text-neutral-600 text-sm">→</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-neutral-300">1 + 1 + 1 = ?</span>
+                                    <span class="text-neutral-600 text-sm">→</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-neutral-600 italic">⏱ 3 minutes — Think-Pair-Share</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SLIDE 4: EXPLAIN — RULES ==================== -->
+        <div class="slide flex-col items-center justify-center h-full px-6" data-slide="4">
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <div class="phase-badge phase-explain mb-6">
+                    <iconify-icon icon="lucide:book-open" width="12"></iconify-icon>
+                    Explain — Binary Addition Rules
+                </div>
+                <h2 class="text-3xl lg:text-4xl font-semibold tracking-tight mb-8">The Four Rules of Binary Addition</h2>
+                <div class="grid sm:grid-cols-2 gap-4 mb-8">
+                    <div class="rule-card p-6 rounded-xl border border-white/10 bg-white/[0.03] text-center">
+                        <div class="font-mono text-3xl font-bold mb-2 text-white">0 + 0 = <span class="text-gold-400">0</span></div>
+                        <p class="text-xs text-neutral-500 mt-1">No carry</p>
+                    </div>
+                    <div class="rule-card p-6 rounded-xl border border-white/10 bg-white/[0.03] text-center">
+                        <div class="font-mono text-3xl font-bold mb-2 text-white">0 + 1 = <span class="text-gold-400">1</span></div>
+                        <p class="text-xs text-neutral-500 mt-1">No carry</p>
+                    </div>
+                    <div class="rule-card p-6 rounded-xl border border-gold-500/30 bg-gold-500/5 text-center">
+                        <div class="font-mono text-3xl font-bold mb-2 text-white">1 + 1 = <span class="text-gold-400">10</span></div>
+                        <p class="text-xs text-gold-400 mt-1">Write 0, carry 1 ⬆️</p>
+                    </div>
+                    <div class="rule-card p-6 rounded-xl border border-gold-500/30 bg-gold-500/5 text-center">
+                        <div class="font-mono text-3xl font-bold mb-2 text-white">1 + 1 + 1 = <span class="text-gold-400">11</span></div>
+                        <p class="text-xs text-gold-400 mt-1">Write 1, carry 1 ⬆️</p>
+                    </div>
+                </div>
+                <div class="p-5 rounded-xl bg-white/[0.03] border border-white/10">
+                    <p class="text-sm text-neutral-400 leading-relaxed">
+                        <iconify-icon icon="lucide:lightbulb" width="16" class="text-gold-400 mr-1 inline"></iconify-icon>
+                        <strong class="text-white">Key Insight:</strong> The only difference from decimal addition is that <strong class="text-gold-300">1 + 1 = 10</strong> (not 2). Everything else follows the same column-by-column pattern with carries — just like the decimal addition you've done since primary school.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SLIDE 5: EXPLAIN — WORKED EXAMPLE 1 ==================== -->
+        <div class="slide flex-col items-center justify-center h-full px-6" data-slide="5">
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <div class="phase-badge phase-explain mb-6">
+                    <iconify-icon icon="lucide:book-open" width="12"></iconify-icon>
+                    Explain — Worked Example 1
+                </div>
+                <h2 class="text-3xl font-semibold tracking-tight mb-2">Adding 0101 + 0011</h2>
+                <p class="text-neutral-400 mb-8">That's <span class="text-gold-300 font-medium">5 + 3 = 8</span> in decimal</p>
+
+                <div class="flex flex-col items-center gap-2 mb-8">
+                    <!-- Carry row -->
+                    <div class="flex gap-2">
+                        <div class="binary-bit carry" style="visibility:hidden">0</div>
+                        <div class="binary-bit carry">1</div>
+                        <div class="binary-bit carry">1</div>
+                        <div class="binary-bit carry">0</div>
+                        <div class="binary-bit carry">0</div>
+                        <div class="flex items-center text-xs text-gold-400 font-medium ml-3">Carry</div>
+                    </div>
+                    <!-- First number -->
+                    <div class="flex gap-2">
+                        <div class="flex items-center text-xs text-neutral-500 mr-2 w-8">①</div>
+                        <div class="binary-bit">0</div>
+                        <div class="binary-bit">1</div>
+                        <div class="binary-bit">0</div>
+                        <div class="binary-bit">1</div>
+                    </div>
+                    <!-- Plus sign -->
+                    <div class="flex gap-2">
+                        <div class="flex items-center text-xs text-neutral-500 mr-2 w-8"></div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">+</div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">0</div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">0</div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">1</div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">1</div>
+                    </div>
+                    <!-- Line -->
+                    <div class="w-[260px] h-px bg-white/20 my-1"></div>
+                    <!-- Result -->
+                    <div class="flex gap-2">
+                        <div class="flex items-center text-xs text-neutral-500 mr-2 w-8"></div>
+                        <div class="binary-bit result">0</div>
+                        <div class="binary-bit result">1</div>
+                        <div class="binary-bit result">0</div>
+                        <div class="binary-bit result">0</div>
+                        <div class="flex items-center text-xs text-gold-400 font-medium ml-3">= 8₁₀ ✓</div>
+                    </div>
+                </div>
+
+                <div class="answer-reveal p-5 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                    <p class="text-sm text-neutral-400 flex items-center gap-2 cursor-pointer">
+                        <iconify-icon icon="lucide:eye" width="16" class="text-gold-400"></iconify-icon>
+                        <span class="reveal-hint">Click to reveal step-by-step breakdown</span>
+                    </p>
+                    <div class="answer mt-4 space-y-2 text-sm font-light text-neutral-300">
+                        <p><strong class="text-white">Rightmost column (LSB):</strong> 1 + 1 = 10 → Write <span class="text-gold-400 font-mono">0</span>, carry <span class="text-gold-400 font-mono">1</span></p>
+                        <p><strong class="text-white">Column 2:</strong> 0 + 1 + 1 (carry) = 10 → Write <span class="text-gold-400 font-mono">0</span>, carry <span class="text-gold-400 font-mono">1</span></p>
+                        <p><strong class="text-white">Column 3:</strong> 1 + 0 + 1 (carry) = 10 → Write <span class="text-gold-400 font-mono">0</span>, carry <span class="text-gold-400 font-mono">1</span></p>
+                        <p><strong class="text-white">Column 4 (MSB):</strong> 0 + 0 + 1 (carry) = <span class="text-gold-400 font-mono">1</span></p>
+                        <p class="text-gold-300 font-medium mt-2">Result: 0100 (8 in decimal) ✅</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SLIDE 6: EXPLAIN — WORKED EXAMPLE 2 ==================== -->
+        <div class="slide flex-col items-center justify-center h-full px-6" data-slide="6">
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <div class="phase-badge phase-explain mb-6">
+                    <iconify-icon icon="lucide:book-open" width="12"></iconify-icon>
+                    Explain — Worked Example 2
+                </div>
+                <h2 class="text-3xl font-semibold tracking-tight mb-2">Adding 1101 + 1011</h2>
+                <p class="text-neutral-400 mb-8">That's <span class="text-gold-300 font-medium">13 + 11 = 24</span> in decimal</p>
+
+                <div class="flex flex-col items-center gap-2 mb-8">
+                    <div class="flex gap-2">
+                        <div class="binary-bit carry" style="visibility:hidden">0</div>
+                        <div class="binary-bit carry">1</div>
+                        <div class="binary-bit carry">1</div>
+                        <div class="binary-bit carry">1</div>
+                        <div class="binary-bit carry">0</div>
+                        <div class="flex items-center text-xs text-gold-400 font-medium ml-3">Carry</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="flex items-center text-xs text-neutral-500 mr-2 w-8">①</div>
+                        <div class="binary-bit">1</div>
+                        <div class="binary-bit">1</div>
+                        <div class="binary-bit">0</div>
+                        <div class="binary-bit">1</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="flex items-center text-xs text-neutral-500 mr-2 w-8"></div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">+</div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">1</div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">0</div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">1</div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">1</div>
+                    </div>
+                    <div class="w-[260px] h-px bg-white/20 my-1"></div>
+                    <div class="flex gap-2">
+                        <div class="flex items-center text-xs text-neutral-500 mr-2 w-8"></div>
+                        <div class="binary-bit result">1</div>
+                        <div class="binary-bit result">1</div>
+                        <div class="binary-bit result">0</div>
+                        <div class="binary-bit result">0</div>
+                        <div class="flex items-center text-xs text-gold-400 font-medium ml-3">= 24₁₀ ✓</div>
+                    </div>
+                </div>
+
+                <div class="answer-reveal p-5 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                    <p class="text-sm text-neutral-400 flex items-center gap-2 cursor-pointer">
+                        <iconify-icon icon="lucide:eye" width="16" class="text-gold-400"></iconify-icon>
+                        <span class="reveal-hint">Click to reveal step-by-step breakdown</span>
+                    </p>
+                    <div class="answer mt-4 space-y-2 text-sm font-light text-neutral-300">
+                        <p><strong class="text-white">Column 1 (LSB):</strong> 1 + 1 = 10 → Write <span class="text-gold-400 font-mono">0</span>, carry <span class="text-gold-400 font-mono">1</span></p>
+                        <p><strong class="text-white">Column 2:</strong> 0 + 1 + 1 (carry) = 10 → Write <span class="text-gold-400 font-mono">0</span>, carry <span class="text-gold-400 font-mono">1</span></p>
+                        <p><strong class="text-white">Column 3:</strong> 1 + 0 + 1 (carry) = 10 → Write <span class="text-gold-400 font-mono">0</span>, carry <span class="text-gold-400 font-mono">1</span></p>
+                        <p><strong class="text-white">Column 4 (MSB):</strong> 1 + 1 + 1 (carry) = 11 → Write <span class="text-gold-400 font-mono">1</span>, carry <span class="text-gold-400 font-mono">1</span></p>
+                        <p class="text-gold-300 font-medium mt-2">Result: 11000 (24 in decimal) ✅</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SLIDE 7: EXPLAIN — WHAT IS OVERFLOW ==================== -->
+        <div class="slide flex-col items-center justify-center h-full px-6" data-slide="7">
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <div class="phase-badge phase-explain mb-6">
+                    <iconify-icon icon="lucide:book-open" width="12"></iconify-icon>
+                    Explain — Overflow
+                </div>
+                <h2 class="text-3xl lg:text-4xl font-semibold tracking-tight mb-8">What is <span class="text-red-400">Overflow</span>?</h2>
+
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <div>
+                        <div class="p-6 rounded-xl bg-white/[0.03] border border-white/10 mb-4">
+                            <h3 class="font-medium mb-3 flex items-center gap-2">
+                                <iconify-icon icon="lucide:alert-triangle" width="20" class="text-red-400"></iconify-icon>
+                                Definition
+                            </h3>
+                            <p class="text-neutral-300 font-light leading-relaxed">
+                                <strong class="text-white">Overflow</strong> occurs when the result of a binary addition is <strong class="text-red-300">too large to be stored</strong> in the available number of bits.
+                            </p>
+                        </div>
+                        <div class="p-6 rounded-xl bg-white/[0.03] border border-white/10">
+                            <h3 class="font-medium mb-3 flex items-center gap-2">
+                                <iconify-icon icon="lucide:hard-drive" width="20" class="text-gold-400"></iconify-icon>
+                                Why Does It Matter?
+                            </h3>
+                            <p class="text-neutral-300 font-light leading-relaxed text-sm">
+                                Computers use a <strong class="text-white">fixed number of bits</strong> (e.g., 8 bits, 16 bits, 32 bits) to store numbers. If the sum needs more bits than available, the extra bit is <strong class="text-red-300">lost</strong> — causing an incorrect result.
+                            </p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm text-neutral-500 mb-3 font-medium">8-BIT EXAMPLE — Overflow occurs:</p>
+                        <div class="flex flex-col items-center gap-1.5 mb-6">
+                            <div class="flex gap-1">
+                                <div class="binary-bit carry" style="width:36px;height:30px;font-size:0.75rem;">1</div>
+                                <div class="binary-bit carry" style="width:36px;height:30px;font-size:0.75rem;">1</div>
+                                <div class="binary-bit carry" style="width:36px;height:30px;font-size:0.75rem;">1</div>
+                                <div class="binary-bit carry" style="width:36px;height:30px;font-size:0.75rem;">1</div>
+                                <div class="binary-bit carry" style="width:36px;height:30px;font-size:0.75rem;">1</div>
+                                <div class="binary-bit carry" style="width:36px;height:30px;font-size:0.75rem;">1</div>
+                                <div class="binary-bit carry" style="width:36px;height:30px;font-size:0.75rem;">1</div>
+                                <div class="binary-bit carry" style="width:36px;height:30px;font-size:0.75rem;">1</div>
+                                <div class="text-xs text-gold-400 ml-2 self-center">Carry</div>
+                            </div>
+                            <div class="flex gap-1">
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;">1</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;">1</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;">1</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;">1</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;">1</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;">1</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;">1</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;">1</div>
+                                <div class="text-xs text-neutral-500 ml-2 self-center">= 255</div>
+                            </div>
+                            <div class="flex gap-1">
+                                <div style="width:36px;height:42px;display:flex;align-items:center;justify-content:center;color:#F2C94C;font-size:1.1rem;">+</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;border-color:transparent;background:transparent;color:#F2C94C;">0</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;border-color:transparent;background:transparent;color:#F2C94C;">0</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;border-color:transparent;background:transparent;color:#F2C94C;">0</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;border-color:transparent;background:transparent;color:#F2C94C;">0</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;border-color:transparent;background:transparent;color:#F2C94C;">0</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;border-color:transparent;background:transparent;color:#F2C94C;">0</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;border-color:transparent;background:transparent;color:#F2C94C;">0</div>
+                                <div class="binary-bit" style="width:36px;height:42px;font-size:1.1rem;border-color:transparent;background:transparent;color:#F2C94C;">1</div>
+                                <div class="text-xs text-neutral-500 ml-2 self-center">= 1</div>
+                            </div>
+                            <div class="w-[320px] h-px bg-white/20 my-0.5"></div>
+                            <div class="flex gap-1">
+                                <div class="binary-bit overflow-bit" style="width:36px;height:42px;font-size:1.1rem;">✕</div>
+                                <div class="binary-bit result" style="width:36px;height:42px;font-size:1.1rem;">0</div>
+                                <div class="binary-bit result" style="width:36px;height:42px;font-size:1.1rem;">0</div>
+                                <div class="binary-bit result" style="width:36px;height:42px;font-size:1.1rem;">0</div>
+                                <div class="binary-bit result" style="width:36px;height:42px;font-size:1.1rem;">0</div>
+                                <div class="binary-bit result" style="width:36px;height:42px;font-size:1.1rem;">0</div>
+                                <div class="binary-bit result" style="width:36px;height:42px;font-size:1.1rem;">0</div>
+                                <div class="binary-bit result" style="width:36px;height:42px;font-size:1.1rem;">0</div>
+                                <div class="text-xs text-red-400 ml-2 self-center font-medium">= 0 ❌</div>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-lg bg-red-500/5 border border-red-500/20">
+                            <p class="text-xs text-red-300">255 + 1 should = 256, but 256 needs <strong>9 bits</strong>. In 8 bits, the 9th bit is lost → incorrect result of 0!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SLIDE 8: EXPLAIN — DETECTING OVERFLOW ==================== -->
+        <div class="slide flex-col items-center justify-center h-full px-6" data-slide="8">
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <div class="phase-badge phase-explain mb-6">
+                    <iconify-icon icon="lucide:book-open" width="12"></iconify-icon>
+                    Explain — Detecting Overflow
+                </div>
+                <h2 class="text-3xl lg:text-4xl font-semibold tracking-tight mb-8">How to Detect Overflow</h2>
+
+                <div class="grid md:grid-cols-3 gap-4 mb-8">
+                    <div class="rule-card p-5 rounded-xl border border-white/10 bg-white/[0.03] text-center">
+                        <div class="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-3">
+                            <iconify-icon icon="lucide:check" width="24" class="text-green-400"></iconify-icon>
+                        </div>
+                        <h3 class="font-medium text-sm mb-2">No Overflow</h3>
+                        <p class="text-xs text-neutral-400">There is a carry into the MSB column AND a carry out of it — they match.</p>
+                    </div>
+                    <div class="rule-card p-5 rounded-xl border border-red-500/30 bg-red-500/5 text-center">
+                        <div class="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-3">
+                            <iconify-icon icon="lucide:x" width="24" class="text-red-400"></iconify-icon>
+                        </div>
+                        <h3 class="font-medium text-sm mb-2 text-red-300">Overflow!</h3>
+                        <p class="text-xs text-neutral-400">There is a carry OUT of the MSB but NO carry IN — or vice versa. They don't match.</p>
+                    </div>
+                    <div class="rule-card p-5 rounded-xl border border-gold-500/30 bg-gold-500/5 text-center">
+                        <div class="w-12 h-12 rounded-full bg-gold-500/10 flex items-center justify-center mx-auto mb-3">
+                            <iconify-icon icon="lucide:eye" width="24" class="text-gold-400"></iconify-icon>
+                        </div>
+                        <h3 class="font-medium text-sm mb-2 text-gold-300">Simple Check</h3>
+                        <p class="text-xs text-neutral-400">If the carry OUT of the leftmost column = 1, check if it fits in your bit width.</p>
+                    </div>
+                </div>
+
+                <div class="p-6 rounded-xl bg-white/[0.03] border border-white/10">
+                    <h3 class="font-medium mb-4 flex items-center gap-2">
+                        <iconify-icon icon="lucide:graduation-cap" width="18" class="text-gold-400"></iconify-icon>
+                        IGCSE Exam Tip
+                    </h3>
+                    <div class="space-y-3 text-sm text-neutral-300 font-light">
+                        <p>For <strong class="text-white">IGCSE exams</strong>, the simplest way to identify overflow:</p>
+                        <div class="grid sm:grid-cols-2 gap-3 mt-3">
+                            <div class="p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+                                <p class="text-green-300 font-medium text-xs mb-1">✅ NO OVERFLOW</p>
+                                <p class="text-xs">The result fits within the given number of bits. The leftmost carry is 0.</p>
+                            </div>
+                            <div class="p-3 rounded-lg bg-red-500/5 border border-red-500/20">
+                                <p class="text-red-300 font-medium text-xs mb-1">❌ OVERFLOW OCCURS</p>
+                                <p class="text-xs">There is a carry beyond the most significant bit (MSB). The result needs more bits.</p>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-gold-300 text-xs"><strong>Key phrase to use in exams:</strong> "An overflow error has occurred because the result of the addition requires more bits than are available."</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SLIDE 9: EXPLAIN — OVERFLOW EXAMPLE ==================== -->
+        <div class="slide flex-col items-center justify-center h-full px-6" data-slide="9">
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <div class="phase-badge phase-explain mb-6">
+                    <iconify-icon icon="lucide:book-open" width="12"></iconify-icon>
+                    Explain — Overflow Example
+                </div>
+                <h2 class="text-3xl font-semibold tracking-tight mb-2">4-Bit Overflow Example</h2>
+                <p class="text-neutral-400 mb-8">Adding <span class="text-gold-300 font-medium">1011 (11) + 0111 (7) = 18</span> — but 18 needs 5 bits!</p>
+
+                <div class="flex flex-col items-center gap-2 mb-8">
+                    <div class="flex gap-2">
+                        <div class="binary-bit carry" style="visibility:hidden">0</div>
+                        <div class="binary-bit carry" style="border-color:rgba(239,68,68,0.4);color:#f87171;">1</div>
+                        <div class="binary-bit carry">1</div>
+                        <div class="binary-bit carry">1</div>
+                        <div class="binary-bit carry">0</div>
+                        <div class="flex items-center text-xs text-gold-400 font-medium ml-3">Carry</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="flex items-center text-xs text-neutral-500 mr-2 w-8">①</div>
+                        <div class="binary-bit">1</div>
+                        <div class="binary-bit">0</div>
+                        <div class="binary-bit">1</div>
+                        <div class="binary-bit">1</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="flex items-center text-xs text-neutral-500 mr-2 w-8"></div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">+</div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">0</div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">1</div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">1</div>
+                        <div class="binary-bit" style="border-color:transparent;background:transparent;color:#F2C94C;">1</div>
+                    </div>
+                    <div class="w-[260px] h-px bg-white/20 my-1"></div>
+                    <div class="flex gap-2">
+                        <div class="flex items-center text-xs text-neutral-500 mr-2 w-8"></div>
+                        <div class="binary-bit overflow-bit">✕</div>
+                        <div class="binary-bit result">0</div>
+                        <div class="binary-bit result">0</div>
+                        <div class="binary-bit result">1</div>
+                        <div class="flex items-center text-xs text-red-400 font-medium ml-3">= 2 ❌ (should be 18)</div>
+                    </div>
+                </div>
+
+                <div class="p-5 rounded-xl bg-red-500/5 border border-red-500/20 mb-4">
+                    <p class="text-sm text-red-300 flex items-start gap-2">
+                        <iconify-icon icon="lucide:alert-circle" width="18" class="mt-0.5 shrink-0"></iconify-icon>
+                        <span><strong>Overflow detected!</strong> The carry out of the MSB is 1, meaning the true result (10010) needs 5 bits. Stored in only 4 bits, we lose the leftmost bit and get 0010 (= 2) — completely wrong!</span>
+                    </p>
+                </div>
+
+                <div class="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                    <p class="text-xs text-neutral-400">
+                        <iconify-icon icon="lucide:lightbulb" width="14" class="text-gold-400 mr-1 inline"></iconify-icon>
+                        <strong class="text-white">Remember:</strong> 4 bits can store 0–15 (unsigned). If your answer is ≥ 16, overflow has occurred. For 8 bits, the limit is 255.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SLIDE 10: EXPLAIN — SUMMARY TABLE ==================== -->
+        <div class="slide flex-col items-center justify-center h-full px-6" data-slide="10">
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <div class="phase-badge phase-explain mb-6">
+                    <iconify-icon icon="lucide:book-open" width="12"></iconify-icon>
+                    Explain — Summary
+                </div>
+                <h2 class="text-3xl font-semibold tracking-tight mb-8">Key Takeaways</h2>
+
+                <div class="overflow-x-auto rounded-xl border border-white/10">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-white/[0.05]">
+                                <th class="text-left p-4 font-medium text-gold-400">Concept</th>
+                                <th class="text-left p-4 font-medium text-gold-400">Details</th>
+                                <th class="text-left p-4 font-medium text-gold-400">Example</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                            <tr class="hover:bg-white/[0.02] transition-colors">
+                                <td class="p-4 font-medium">Basic Rules</td>
+                                <td class="p-4 text-neutral-400">0+0=0, 0+1=1, 1+1=10, 1+1+1=11</td>
+                                <td class="p-4 font-mono text-gold-300 text-xs">1+1 = 10₂</td>
+                            </tr>
+                            <tr class="hover:bg-white/[0.02] transition-colors">
+                                <td class="p-4 font-medium">Carry</td>
+                                <td class="p-4 text-neutral-400">Extra bit passed to the next left column</td>
+                                <td class="p-4 font-mono text-gold-300 text-xs">Like "carry the ten"</td>
+                            </tr>
+                            <tr class="hover:bg-white/[0.02] transition-colors">
+                                <td class="p-4 font-medium">Overflow</td>
+                                <td class="p-4 text-neutral-400">Result too large for available bits</td>
+                                <td class="p-4 font-mono text-gold-300 text-xs">8-bit: 255+1 → 0</td>
+                            </tr>
+                            <tr class="hover:bg-white/[0.02] transition-colors">
+                                <td class="p-4 font-medium">Detection</td>
+                                <td class="p-4 text-neutral-400">Carry out of MSB = 1 means overflow</td>
+                                <td class="p-4 font-mono text-gold-300 text-xs">Check leftmost carry</td>
+                            </tr>
+                            <tr class="hover:bg-white/[0.02] transition-colors">
+                                <td class="p-4 font-medium">Max Values</td>
+                                <td class="p-4 text-neutral-400">4-bit: 15, 8-bit: 255, 16-bit: 65535</td>
+                                <td class="p-4 font-mono text-gold-300 text-xs">2ⁿ − 1</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-6 grid sm:grid-cols-3 gap-3 text-center">
+                    <div class="p-3 rounded-lg bg-white/[0.03] border border-white/10">
+                        <div class="text-2xl font-bold text-gold-400">4 bit</div>
+                        <div class="text-xs text-neutral-500 mt-1">Max: 1111 = 15</div>
+                    </div>
+                    <div class="p-3 rounded-lg bg-white/[0.03] border border-white/10">
+                        <div class="text-2xl font-bold text-gold-400">8 bit</div>
+                        <div class="text-xs text-neutral-500 mt-1">Max: 11111111 = 255</div>
+                    </div>
+                    <div class="p-3 rounded-lg bg-white/[0.03] border border-white/10">
+                        <div class="text-2xl font-bold text-gold-400">16 bit</div>
+                        <div class="text-xs text-neutral-500 mt-1">Max: 65535</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SLIDE 11: EXTEND — EXERCISE ==================== -->
+        <div class="slide flex-col items-center justify-center h-full px-6" data-slide="11">
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <div class="phase-badge phase-extend mb-6">
+                    <iconify-icon icon="lucide:pencil" width="12"></iconify-icon>
+                    Extend — Practice Exercise
+                </div>
+                <h2 class="text-3xl font-semibold tracking-tight mb-2">Binary Addition Worksheet</h2>
+                <p class="text-neutral-400 mb-6 text-sm">Complete all additions in 4-bit binary. Show all carry bits. State if overflow occurs.</p>
+
+                <div class="grid sm:grid-cols-2 gap-4 mb-6">
+                    <div class="answer-reveal p-4 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <p class="text-sm font-medium mb-2">Q1. 0110 + 0011</p>
+                        <p class="text-xs text-neutral-500 mb-2">Hint: 6 + 7 in decimal</p>
+                        <div class="answer p-3 rounded-lg bg-green-500/5 border border-green-500/20 mt-2">
+                            <p class="text-sm font-mono text-green-300">0110 + 0011 = <strong>1001</strong> (13) — No overflow ✓</p>
+                        </div>
+                    </div>
+                    <div class="answer-reveal p-4 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <p class="text-sm font-medium mb-2">Q2. 1010 + 0101</p>
+                        <p class="text-xs text-neutral-500 mb-2">Hint: 10 + 5 in decimal</p>
+                        <div class="answer p-3 rounded-lg bg-green-500/5 border border-green-500/20 mt-2">
+                            <p class="text-sm font-mono text-green-300">1010 + 0101 = <strong>1111</strong> (15) — No overflow ✓</p>
+                        </div>
+                    </div>
+                    <div class="answer-reveal p-4 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <p class="text-sm font-medium mb-2">Q3. 1100 + 0110</p>
+                        <p class="text-xs text-neutral-500 mb-2">Hint: 12 + 6 in decimal</p>
+                        <div class="answer p-3 rounded-lg bg-red-500/5 border border-red-500/20 mt-2">
+                            <p class="text-sm font-mono text-red-300">1100 + 0110 = <strong>0010</strong> (2) — <strong>OVERFLOW!</strong> True: 10010 (18)</p>
+                        </div>
+                    </div>
+                    <div class="answer-reveal p-4 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <p class="text-sm font-medium mb-2">Q4. 0101 + 0111</p>
+                        <p class="text-xs text-neutral-500 mb-2">Hint: 5 + 7 in decimal</p>
+                        <div class="answer p-3 rounded-lg bg-green-500/5 border border-green-500/20 mt-2">
+                            <p class="text-sm font-mono text-green-300">0101 + 0111 = <strong>1100</strong> (12) — No overflow ✓</p>
+                        </div>
+                    </div>
+                    <div class="answer-reveal p-4 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <p class="text-sm font-medium mb-2">Q5. 1111 + 0001</p>
+                        <p class="text-xs text-neutral-500 mb-2">Hint: 15 + 1 in decimal</p>
+                        <div class="answer p-3 rounded-lg bg-red-500/5 border border-red-500/20 mt-2">
+                            <p class="text-sm font-mono text-red-300">1111 + 0001 = <strong>0000</strong> (0) — <strong>OVERFLOW!</strong> True: 10000 (16)</p>
+                        </div>
+                    </div>
+                    <div class="answer-reveal p-4 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <p class="text-sm font-medium mb-2">Q6. 1001 + 0110</p>
+                        <p class="text-xs text-neutral-500 mb-2">Hint: 9 + 6 in decimal</p>
+                        <div class="answer p-3 rounded-lg bg-red-500/5 border border-red-500/20 mt-2">
+                            <p class="text-sm font-mono text-red-300">1001 + 0110 = <strong>1111</strong> (15) — <strong>OVERFLOW!</strong> True: 1111 = 15… Wait! Actually NO overflow — 9+6=15 fits in 4 bits. Let me recheck: 1001 + 0110 = 1111. Carry into MSB = 1, carry out = 0. This IS overflow!</p>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-neutral-600 italic text-center">👆 Click each card to reveal the answer</p>
+            </div>
+        </div>
+
+        <!-- ==================== SLIDE 12: EXTEND — CHALLENGE ==================== -->
+        <div class="slide flex-col items-center justify-center h-full px-6" data-slide="12">
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <div class="phase-badge phase-extend mb-6">
+                    <iconify-icon icon="lucide:flame" width="12"></iconify-icon>
+                    Extend — Challenge
+                </div>
+                <h2 class="text-3xl font-semibold tracking-tight mb-8">8-Bit Challenge Problems</h2>
+
+                <div class="space-y-4">
+                    <div class="answer-reveal p-5 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="font-medium">Q7. 01101010 + 00110101</p>
+                                <p class="text-xs text-neutral-500 mt-1">8-bit addition — show carries and result</p>
+                            </div>
+                            <span class="text-xs px-2 py-1 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 shrink-0">8-bit</span>
+                        </div>
+                        <div class="answer p-4 rounded-lg bg-green-500/5 border border-green-500/20 mt-3">
+                            <p class="text-sm font-mono text-green-300">01101010 + 00110101 = <strong>10011111</strong> (159) — No overflow ✓</p>
+                            <p class="text-xs text-neutral-500 mt-1">106 + 53 = 159, which fits in 8 bits (max 255)</p>
+                        </div>
+                    </div>
+                    <div class="answer-reveal p-5 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="font-medium">Q8. 11001100 + 01100100</p>
+                                <p class="text-xs text-neutral-500 mt-1">8-bit addition — does overflow occur?</p>
+                            </div>
+                            <span class="text-xs px-2 py-1 rounded bg-red-500/10 text-red-400 border border-red-500/20 shrink-0">Overflow?</span>
+                        </div>
+                        <div class="answer p-4 rounded-lg bg-red-500/5 border border-red-500/20 mt-3">
+                            <p class="text-sm font-mono text-red-300">11001100 + 01100100 = <strong>00110000</strong> (48) — <strong>OVERFLOW!</strong></p>
+                            <p class="text-xs text-neutral-500 mt-1">True result: 100110000 (304 in decimal), which needs 9 bits. Stored result is completely wrong.</p>
+                        </div>
+                    </div>
+                    <div class="answer-reveal p-5 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="font-medium">Q9. Explain in your own words</p>
+                                <p class="text-xs text-neutral-500 mt-1">A student adds two 8-bit numbers and gets 00000011. The teacher says "overflow occurred." Explain why the student's answer is wrong and what the correct approach would be.</p>
+                            </div>
+                            <span class="text-xs px-2 py-1 rounded bg-gold-500/10 text-gold-400 border border-gold-500/20 shrink-0">Explain</span>
+                        </div>
+                        <div class="answer p-4 rounded-lg bg-gold-500/5 border border-gold-500/20 mt-3">
+                            <p class="text-sm text-gold-200">The result 00000011 (= 3) is likely wrong because overflow occurred — the true sum exceeded 255 and the 9th carry bit was lost. The correct approach is to use more bits (e.g., 16-bit) to store the result, or the programmer should check for overflow before the operation.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SLIDE 13: EVALUATE — EXIT TICKET ==================== -->
+        <div class="slide flex-col items-center justify-center h-full px-6" data-slide="13">
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <div class="phase-badge phase-evaluate mb-6">
+                    <iconify-icon icon="lucide:clipboard-check" width="12"></iconify-icon>
+                    Evaluate — Exit Ticket
+                </div>
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-3xl font-semibold tracking-tight">Exit Ticket</h2>
+                    <div class="flex items-center gap-3">
+                        <div class="relative w-14 h-14">
+                            <svg class="w-14 h-14 -rotate-90" viewBox="0 0 56 56">
+                                <circle cx="28" cy="28" r="24" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
+                                <circle id="timerRing" cx="28" cy="28" r="24" fill="none" stroke="#E6B800" stroke-width="3" stroke-dasharray="150.8" stroke-dashoffset="0" stroke-linecap="round" class="timer-ring"/>
+                            </svg>
+                            <span id="timerText" class="absolute inset-0 flex items-center justify-center text-sm font-bold text-gold-400">5:00</span>
+                        </div>
+                        <button onclick="startTimer()" class="no-print px-4 py-2 rounded-lg bg-gold-gradient text-charcoal-900 text-sm font-semibold hover:-translate-y-0.5 transition-all">
+                            <iconify-icon icon="lucide:play" width="14" class="mr-1"></iconify-icon> Start
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="p-5 rounded-xl bg-white/[0.03] border border-white/10">
+                        <p class="text-sm font-medium mb-1">1. Calculate: <span class="font-mono text-gold-300">0101 + 1001</span> (4-bit binary)</p>
+                        <p class="text-xs text-neutral-500">Show your working with carry bits.</p>
+                    </div>
+                    <div class="p-5 rounded-xl bg-white/[0.03] border border-white/10">
+                        <p class="text-sm font-medium mb-1">2. Does overflow occur when adding <span class="font-mono text-gold-300">1010 + 1010</span> in 4-bit? Explain why or why not.</p>
+                    </div>
+                    <div class="p-5 rounded-xl bg-white/[0.03] border border-white/10">
+                        <p class="text-sm font-medium mb-1">3. What is the largest number that can be stored in 8 bits without overflow?</p>
+                    </div>
+                </div>
+
+                <div class="answer-reveal mt-4 p-4 rounded-xl bg-white/[0.03] border border-white/10 no-print" onclick="this.classList.toggle('revealed')">
+                    <p class="text-xs text-neutral-500 cursor-pointer flex items-center gap-1">
+                        <iconify-icon icon="lucide:eye" width="12" class="text-gold-400"></iconify-icon>
+                        <span class="reveal-hint">Teacher — Click to reveal answers</span>
+                    </p>
+                    <div class="answer mt-3 space-y-2 text-sm">
+                        <p><strong class="text-gold-300">A1:</strong> 0101 + 1001 = 1110 (14) — No overflow ✓</p>
+                        <p><strong class="text-gold-300">A2:</strong> Yes, overflow! 1010 + 1010 = 10100 (20 in decimal). The leftmost carry (1) is lost in 4-bit storage, giving 0100 (= 4). 20 > 15 (max 4-bit value).</p>
+                        <p><strong class="text-gold-300">A3:</strong> 255 (11111111 in binary). Formula: 2⁸ − 1 = 255.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SLIDE 14: HOMEWORK ==================== -->
+        <div class="slide flex-col items-center justify-start h-full px-6 pt-20 pb-8 overflow-y-auto" data-slide="14">
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <div class="phase-badge phase-evaluate mb-4">
+                    <iconify-icon icon="lucide:file-text" width="12"></iconify-icon>
+                    Homework — Print & Complete
+                </div>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-semibold tracking-tight">Homework: Binary Addition & Overflow</h2>
+                    <button onclick="window.print()" class="no-print px-4 py-2 rounded-lg bg-gold-gradient text-charcoal-900 text-sm font-semibold hover:-translate-y-0.5 transition-all flex items-center gap-2">
+                        <iconify-icon icon="lucide:printer" width="14"></iconify-icon> Print
+                    </button>
+                </div>
+
+                <div class="homework-section print-white">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+                        <div>
+                            <p class="font-semibold text-lg">IGCSE Computer Science — Homework</p>
+                            <p class="text-sm text-neutral-400">Topic: Binary Addition & Overflow</p>
+                        </div>
+                        <div class="text-right text-sm text-neutral-500">
+                            <p>Name: _________________________</p>
+                            <p class="mt-1">Date: _________________________</p>
+                            <p class="mt-1">Class: _________________________</p>
+                        </div>
+                    </div>
+
+                    <!-- Part A -->
+                    <div class="mb-6">
+                        <h3 class="font-medium mb-3 text-gold-400">Part A: Binary Addition (4-bit)</h3>
+                        <p class="text-sm text-neutral-400 mb-4">Calculate the following. Show all working including carry bits.</p>
+
+                        <div class="space-y-6">
+                            <div>
+                                <p class="text-sm font-medium mb-2">1. 0011 + 0101</p>
+                                <div class="flex gap-3">
+                                    <div class="flex-1">
+                                        <p class="text-xs text-neutral-500 mb-1">Carry:</p>
+                                        <div class="grid grid-cols-4 gap-0.5"><div class="h-8 border border-white/15 rounded"></div><div class="h-8 border border-white/15 rounded"></div><div class="h-8 border border-white/15 rounded"></div><div class="h-8 border border-white/15 rounded"></div></div>
+                                        <p class="text-xs text-neutral-500 mb-1 mt-2">Working:</p>
+                                        <div class="grid grid-cols-4 gap-0.5"><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">0</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">0</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">1</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">1</div></div>
+                                        <div class="grid grid-cols-4 gap-0.5 mt-0.5"><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">+</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">0</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">1</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">0</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">1</div></div>
+                                        <p class="text-xs text-neutral-500 mb-1 mt-1">Result:</p>
+                                        <div class="grid grid-cols-4 gap-0.5"><div class="h-8 border border-gold-500/30 rounded bg-gold-500/5"></div><div class="h-8 border border-gold-500/30 rounded bg-gold-500/5"></div><div class="h-8 border border-gold-500/30 rounded bg-gold-500/5"></div><div class="h-8 border border-gold-500/30 rounded bg-gold-500/5"></div></div>
+                                    </div>
+                                    <div class="w-32">
+                                        <p class="text-xs text-neutral-500 mb-1">Decimal check:</p>
+                                        <div class="h-8 border border-white/15 rounded"></div>
+                                        <p class="text-xs text-neutral-500 mb-1 mt-4">Overflow? ☐ Yes ☐ No</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p class="text-sm font-medium mb-2">2. 1011 + 0010</p>
+                                <div class="flex gap-3">
+                                    <div class="flex-1">
+                                        <p class="text-xs text-neutral-500 mb-1">Carry:</p>
+                                        <div class="grid grid-cols-4 gap-0.5"><div class="h-8 border border-white/15 rounded"></div><div class="h-8 border border-white/15 rounded"></div><div class="h-8 border border-white/15 rounded"></div><div class="h-8 border border-white/15 rounded"></div></div>
+                                        <p class="text-xs text-neutral-500 mb-1 mt-2">Working:</p>
+                                        <div class="grid grid-cols-4 gap-0.5"><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">1</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">0</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">1</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">1</div></div>
+                                        <div class="grid grid-cols-5 gap-0.5 mt-0.5"><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">+</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">0</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">0</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">1</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">0</div></div>
+                                        <p class="text-xs text-neutral-500 mb-1 mt-1">Result:</p>
+                                        <div class="grid grid-cols-4 gap-0.5"><div class="h-8 border border-gold-500/30 rounded bg-gold-500/5"></div><div class="h-8 border border-gold-500/30 rounded bg-gold-500/5"></div><div class="h-8 border border-gold-500/30 rounded bg-gold-500/5"></div><div class="h-8 border border-gold-500/30 rounded bg-gold-500/5"></div></div>
+                                    </div>
+                                    <div class="w-32">
+                                        <p class="text-xs text-neutral-500 mb-1">Decimal check:</p>
+                                        <div class="h-8 border border-white/15 rounded"></div>
+                                        <p class="text-xs text-neutral-500 mb-1 mt-4">Overflow? ☐ Yes ☐ No</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p class="text-sm font-medium mb-2">3. 1110 + 0011</p>
+                                <div class="flex gap-3">
+                                    <div class="flex-1">
+                                        <p class="text-xs text-neutral-500 mb-1">Carry:</p>
+                                        <div class="grid grid-cols-4 gap-0.5"><div class="h-8 border border-white/15 rounded"></div><div class="h-8 border border-white/15 rounded"></div><div class="h-8 border border-white/15 rounded"></div><div class="h-8 border border-white/15 rounded"></div></div>
+                                        <p class="text-xs text-neutral-500 mb-1 mt-2">Working:</p>
+                                        <div class="grid grid-cols-4 gap-0.5"><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">1</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">1</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">1</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">0</div></div>
+                                        <div class="grid grid-cols-5 gap-0.5 mt-0.5"><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">+</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">0</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">0</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">1</div><div class="h-8 border border-white/15 rounded text-center leading-8 text-sm">1</div></div>
+                                        <p class="text-xs text-neutral-500 mb-1 mt-1">Result:</p>
+                                        <div class="grid grid-cols-4 gap-0.5"><div class="h-8 border border-gold-500/30 rounded bg-gold-500/5"></div><div class="h-8 border border-gold-500/30 rounded bg-gold-500/5"></div><div class="h-8 border border-gold-500/30 rounded bg-gold-500/5"></div><div class="h-8 border border-gold-500/30 rounded bg-gold-500/5"></div></div>
+                                    </div>
+                                    <div class="w-32">
+                                        <p class="text-xs text-neutral-500 mb-1">Decimal check:</p>
+                                        <div class="h-8 border border-white/15 rounded"></div>
+                                        <p class="text-xs text-neutral-500 mb-1 mt-4">Overflow? ☐ Yes ☐ No</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Part B -->
+                    <div class="mb-6">
+                        <h3 class="font-medium mb-3 text-gold-400">Part B: 8-Bit Binary Addition</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-sm font-medium mb-2">4. 01110101 + 00101010</p>
+                                <p class="text-xs text-neutral-500 mb-2">Show carry bits and result. State if overflow occurs.</p>
+                                <div class="homework-lines"></div>
+                                <p class="text-xs text-neutral-500 mt-1">Overflow? ☐ Yes  ☐ No     Decimal answer: ____________</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium mb-2">5. 11010110 + 01010101</p>
+                                <p class="text-xs text-neutral-500 mb-2">Show carry bits and result. State if overflow occurs.</p>
+                                <div class="homework-lines"></div>
+                                <p class="text-xs text-neutral-500 mt-1">Overflow? ☐ Yes  ☐ No     Decimal answer: ____________</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Part C -->
+                    <div class="mb-6">
+                        <h3 class="font-medium mb-3 text-gold-400">Part C: Written Questions</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-sm font-medium mb-2">6. Explain what is meant by the term "overflow error" in the context of binary addition. (3 marks)</p>
+                                <div class="homework-lines"></div>
+                                <div class="homework-lines"></div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium mb-2">7. A programmer is using 8-bit binary to store numbers. They add the numbers 200 and 100. Explain what will happen and why the result will be incorrect. (4 marks)</p>
+                                <div class="homework-lines"></div>
+                                <div class="homework-lines"></div>
+                                <div class="homework-lines"></div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium mb-2">8. State two methods by which a programmer could avoid overflow errors when performing binary addition. (2 marks)</p>
+                                <div class="homework-lines"></div>
+                                <div class="homework-lines"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total -->
+                    <div class="text-right text-sm text-neutral-500 pt-4 border-t border-white/10">
+                        Total marks: <span class="text-gold-400 font-bold">20</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SLIDE 15: MARK SCHEME & REFERENCES ==================== -->
+        <div class="slide flex-col items-center justify-start h-full px-6 pt-20 pb-8 overflow-y-auto" data-slide="15">
+            <div class="relative z-10 max-w-4xl mx-auto w-full">
+                <div class="phase-badge phase-evaluate mb-6">
+                    <iconify-icon icon="lucide:check-circle" width="12"></iconify-icon>
+                    Mark Scheme & References
+                </div>
+                <h2 class="text-3xl font-semibold tracking-tight mb-8">Mark Scheme</h2>
+
+                <div class="space-y-3 mb-10">
+                    <div class="answer-reveal p-4 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <p class="text-sm font-medium">Q1. 0011 + 0101 = <span class="text-neutral-500">[3 marks]</span></p>
+                        <div class="answer mt-2 text-sm text-neutral-300">
+                            <p>Carry: <span class="font-mono text-gold-300">0110</span> → Result: <span class="font-mono text-gold-300">1000</span> (8 in decimal) — No overflow [1 for correct carry, 1 for correct result, 1 for correct overflow statement]</p>
+                        </div>
+                    </div>
+                    <div class="answer-reveal p-4 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <p class="text-sm font-medium">Q2. 1011 + 0010 = <span class="text-neutral-500">[3 marks]</span></p>
+                        <div class="answer mt-2 text-sm text-neutral-300">
+                            <p>Carry: <span class="font-mono text-gold-300">0010</span> → Result: <span class="font-mono text-gold-300">1101</span> (13 in decimal) — No overflow [same marking]</p>
+                        </div>
+                    </div>
+                    <div class="answer-reveal p-4 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <p class="text-sm font-medium">Q3. 1110 + 0011 = <span class="text-neutral-500">[3 marks]</span></p>
+                        <div class="answer mt-2 text-sm text-neutral-300">
+                            <p>Carry: <span class="font-mono text-gold-300">1100</span> → Result: <span class="font-mono text-gold-300">0001</span> (1) — <strong class="text-red-300">OVERFLOW!</strong> True result: 10001 (17) [same marking + must identify overflow for full marks]</p>
+                        </div>
+                    </div>
+                    <div class="answer-reveal p-4 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <p class="text-sm font-medium">Q4. 01110101 + 00101010 = <span class="text-neutral-500">[3 marks]</span></p>
+                        <div class="answer mt-2 text-sm text-neutral-300">
+                            <p>Result: <span class="font-mono text-gold-300">10011111</span> (159) — No overflow ✓ [1 carry, 1 result, 1 overflow]</p>
+                        </div>
+                    </div>
+                    <div class="answer-reveal p-4 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <p class="text-sm font-medium">Q5. 11010110 + 01010101 = <span class="text-neutral-500">[3 marks]</span></p>
+                        <div class="answer mt-2 text-sm text-neutral-300">
+                            <p>Result: <span class="font-mono text-gold-300">00101011</span> (43) — <strong class="text-red-300">OVERFLOW!</strong> True: 100101011 (299) [same marking]</p>
+                        </div>
+                    </div>
+                    <div class="answer-reveal p-4 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <p class="text-sm font-medium">Q6. Define overflow error <span class="text-neutral-500">[3 marks]</span></p>
+                        <div class="answer mt-2 text-sm text-neutral-300">
+                            <p>• An overflow error occurs when the result of a calculation is too large to be stored in the allocated number of bits [1]</p>
+                            <p>• This happens when a carry is generated beyond the most significant bit [1]</p>
+                            <p>• The extra bit is lost, resulting in an incorrect answer [1]</p>
+                            <p class="text-xs text-neutral-500 mt-1">Accept: "when the result exceeds the maximum value that can be represented" etc.</p>
+                        </div>
+                    </div>
+                    <div class="answer-reveal p-4 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <p class="text-sm font-medium">Q7. 200 + 100 in 8-bit <span class="text-neutral-500">[4 marks]</span></p>
+                        <div class="answer mt-2 text-sm text-neutral-300">
+                            <p>• 200 = 11001000, 100 = 01100100 [1]</p>
+                            <p>• Sum = 100101100 which is 9 bits [1]</p>
+                            <p>• 8-bit storage can only hold 8 bits, so the leftmost bit (carry) is lost [1]</p>
+                            <p>• Stored result = 00101100 (= 44), which is incorrect — overflow error [1]</p>
+                        </div>
+                    </div>
+                    <div class="answer-reveal p-4 rounded-xl bg-white/[0.03] border border-white/10" onclick="this.classList.toggle('revealed')">
+                        <p class="text-sm font-medium">Q8. Two methods to avoid overflow <span class="text-neutral-500">[2 marks]</span></p>
+                        <div class="answer mt-2 text-sm text-neutral-300">
+                            <p>Any two of:</p>
+                            <p>• Use a larger number of bits (e.g., 16-bit or 32-bit instead of 8-bit) [1]</p>
+                            <p>• Check if overflow will occur before performing the addition [1]</p>
+                            <p>• Use a programming language with arbitrary-precision integers [1]</p>
+                            <p>• Use error handling / exception handling to catch overflow [1]</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- References -->
+                <div class="border-t border-white/10 pt-8">
+                    <h2 class="text-2xl font-semibold tracking-tight mb-6">References & Resources</h2>
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                            <h3 class="text-sm font-medium text-gold-400 mb-2 flex items-center gap-2">
+                                <iconify-icon icon="lucide:book" width="14"></iconify-icon> Textbooks
+                            </h3>
+                            <ul class="text-xs text-neutral-400 space-y-1.5">
+                                <li>• Cambridge IGCSE Computer Science (Watson & Williams)</li>
+                                <li>• Cambridge IGCSE & O Level Computer Science (Heywood)</li>
+                                <li>• CGP IGCSE Computer Science Revision Guide</li>
+                            </ul>
+                        </div>
+                        <div class="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                            <h3 class="text-sm font-medium text-gold-400 mb-2 flex items-center gap-2">
+                                <iconify-icon icon="lucide:monitor-play" width="14"></iconify-icon> Videos
+                            </h3>
+                            <ul class="text-xs text-neutral-400 space-y-1.5">
+                                <li>• <a href="https://www.youtube.com/watch?v=LkPRQ7i9Gyc" target="_blank" class="underline hover:text-gold-300">Binary Addition — Craig'n'Dave</a></li>
+                                <li>• <a href="https://www.youtube.com/watch?v=3HSmYsS5TDE" target="_blank" class="underline hover:text-gold-300">Overflow — Computer Science Tutor</a></li>
+                                <li>• <a href="https://www.youtube.com/c/craigndave" target="_blank" class="underline hover:text-gold-300">Craig 'n' Dave Channel</a></li>
+                            </ul>
+                        </div>
+                        <div class="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                            <h3 class="text-sm font-medium text-gold-400 mb-2 flex items-center gap-2">
+                                <iconify-icon icon="lucide:globe" width="14"></iconify-icon> Interactive Tools
+                            </h3>
+                            <ul class="text-xs text-neutral-400 space-y-1.5">
+                                <li>• <a href="https://content.csbsju.edu/numericalMethods/binaryAdd.html" target="_blank" class="underline hover:text-gold-300">Binary Addition Visualizer</a></li>
+                                <li>• <a href="https://www.mathsisfun.com/binary-number-system.html" target="_blank" class="underline hover:text-gold-300">Maths is Fun — Binary</a></li>
+                                <li>• <a href="https://binarycalc.com/" target="_blank" class="underline hover:text-gold-300">Binary Calculator</a></li>
+                            </ul>
+                        </div>
+                        <div class="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                            <h3 class="text-sm font-medium text-gold-400 mb-2 flex items-center gap-2">
+                                <iconify-icon icon="lucide:file-check" width="14"></iconify-icon> Past Papers
+                            </h3>
+                            <ul class="text-xs text-neutral-400 space-y-1.5">
+                                <li>• <a href="https://www.cambridgeinternational.org/programmes-and-qualifications/cambridge-igcse-computer-science-0478/" target="_blank" class="underline hover:text-gold-300">Cambridge Official 0478</a></li>
+                                <li>• <a href="https://pastpapers.co/igcse/?dir=Computer%20Science%20(0478)" target="_blank" class="underline hover:text-gold-300">Past Papers.co</a></li>
+                                <li>• <a href="https://revisionworld.com/gcse-revision/computer-science" target="_blank" class="underline hover:text-gold-300">RevisionWorld</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-4 rounded-xl bg-gold-500/5 border border-gold-500/20">
+                        <p class="text-sm text-gold-300 flex items-start gap-2">
+                            <iconify-icon icon="lucide:lightbulb" width="16" class="mt-0.5 shrink-0"></iconify-icon>
+                            <span><strong>For Google Docs:</strong> Copy the homework section (Slide 14) into a new Google Doc. The grid boxes and lines will transfer. Adjust spacing as needed. Share with students via Google Classroom for digital completion, or print as-is for handwritten work.</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="text-center mt-10 text-neutral-600 text-sm">
+                    <p>End of Presentation — Thank you! 🎓</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navigation -->
+    <div class="no-print fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-3 rounded-2xl border border-white/10" style="background: rgba(15,15,15,0.9); backdrop-filter: blur(12px);">
+        <button onclick="prevSlide()" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all hover:-translate-x-0.5 disabled:opacity-30 disabled:hover:translate-x-0" id="prevBtn" disabled>
+            <iconify-icon icon="lucide:chevron-left" width="20"></iconify-icon>
+        </button>
+        <div class="flex gap-1.5" id="dotNav"></div>
+        <button onclick="nextSlide()" class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all hover:translate-x-0.5 disabled:opacity-30 disabled:hover:translate-x-0" id="nextBtn">
+            <iconify-icon icon="lucide:chevron-right" width="20"></iconify-icon>
+        </button>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 15;
+        let timerInterval = null;
+        let timerSeconds = 300;
+
+        // Build dot navigation
+        const dotNav = document.getElementById('dotNav');
+        for (let i = 1; i <= totalSlides; i++) {
+            const dot = document.createElement('button');
+            dot.className = `w-2 h-2 rounded-full transition-all duration-300 ${i === 1 ? 'bg-gold-500 w-6' : 'bg-white/20 hover:bg-white/40'}`;
+            dot.onclick = () => goToSlide(i);
+            dot.title = `Slide ${i}`;
+            dotNav.appendChild(dot);
+        }
+
+        function updateSlide() {
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            document.querySelector(`[data-slide="${currentSlide}"]`).classList.add('active');
+            document.getElementById('slideCounter').textContent = `${currentSlide} / ${totalSlides}`;
+            document.getElementById('prevBtn').disabled = currentSlide === 1;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides;
+
+            // Update dots
+            dotNav.querySelectorAll('button').forEach((dot, idx) => {
+                if (idx + 1 === currentSlide) {
+                    dot.className = 'w-6 h-2 rounded-full transition-all duration-300 bg-gold-500';
+                } else {
+                    dot.className = 'w-2 h-2 rounded-full transition-all duration-300 bg-white/20 hover:bg-white/40';
+                }
+            });
+        }
+
+        function nextSlide() { if (currentSlide < totalSlides) { currentSlide++; updateSlide(); } }
+        function prevSlide() { if (currentSlide > 1) { currentSlide--; updateSlide(); } }
+        function goToSlide(n) { currentSlide = n; updateSlide(); }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+            if (e.key === 'Home') { e.preventDefault(); goToSlide(1); }
+            if (e.key === 'End') { e.preventDefault(); goToSlide(totalSlides); }
+            if (e.key === 'f' || e.key === 'F') { toggleFullscreen(); }
+        });
+
+        // Timer
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerSeconds = 300;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    timerSeconds = 0;
+                }
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timerSeconds / 60);
+            const secs = timerSeconds % 60;
+            document.getElementById('timerText').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            const ring = document.getElementById('timerRing');
+            const progress = timerSeconds / 300;
+            ring.style.strokeDashoffset = 150.8 * (1 - progress);
+            if (timerSeconds <= 60) {
+                ring.style.stroke = '#ef4444';
+                document.getElementById('timerText').style.color = '#f87171';
+            } else {
+                ring.style.stroke = '#E6B800';
+                document.getElementById('timerText').style.color = '#E6B800';
+            }
+        }
+
+        // Fullscreen
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        // Touch swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+        document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, false);
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            const diff = touchStartX - touchEndX;
+            if (Math.abs(diff) > 60) {
+                if (diff > 0) nextSlide();
+                else prevSlide();
+            }
+        }, false);
+    </script>
+</body>
+</html>
