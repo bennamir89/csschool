@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engineering Design - Unit 3: Design Process & Selection</title>
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            --primary: #0056b3; /* Engineering Blue */
+            --secondary: #f0f4f8; /* Light Grey Background */
+            --accent: #ff9f1c; /* Highlight Orange */
+            --text: #333333;
+            --text-light: #666666;
+            --white: #ffffff;
+            --success: #28a745;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: var(--font-main);
+            background-color: var(--secondary);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevent scrolling, slideshow style */
+        }
+
+        /* --- LAYOUT --- */
+        header {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            z-index: 10;
+        }
+
+        .header-title h1 { font-size: 1.2rem; font-weight: 600; }
+        .header-title span { font-size: 0.9rem; opacity: 0.8; }
+
+        .progress-container {
+            width: 200px;
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        main {
+            flex: 1;
+            position: relative;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto; /* Allow scrolling within slide if content is long */
+        }
+
+        /* --- SLIDE STYLING --- */
+        .slide {
+            display: none; /* Hidden by default */
+            width: 100%;
+            max-width: 1000px;
+            background: var(--white);
+            padding: 2.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.4s ease-in-out;
+            height: fit-content;
+        }
+
+        .slide.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 { color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+        h3 { color: var(--text); margin: 1rem 0 0.5rem; }
+        p, li { line-height: 1.6; margin-bottom: 0.8rem; color: var(--text-light); }
+        ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+
+        /* --- COMPONENTS --- */
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .tag.engage { background: #e3f2fd; color: #1565c0; }
+        .tag.explore { background: #e8f5e9; color: #2e7d32; }
+        .tag.explain { background: #fff3e0; color: #ef6c00; }
+        .tag.extend { background: #f3e5f5; color: #7b1fa2; }
+        .tag.evaluate { background: #ffebee; color: #c62828; }
+
+        .btn {
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .btn:hover { background-color: #004494; }
+        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: var(--primary); color: var(--white); }
+
+        .video-placeholder {
+            width: 100%;
+            height: 350px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            position: relative;
+            background-image: url('https://picsum.photos/seed/engdesign/800/400');
+            background-size: cover;
+        }
+        .play-btn {
+            font-size: 3rem;
+            opacity: 0.8;
+            cursor: pointer;
+        }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: var(--secondary); color: var(--primary); }
+
+        /* --- HOMEWORK / PRINTABLE AREA --- */
+        .paper-sheet {
+            border: 1px solid #ccc;
+            padding: 40px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .handwriting-lines {
+            margin-top: 10px;
+            border-bottom: 1px solid #999;
+            height: 30px;
+            width: 100%;
+        }
+        .answers-hidden { display: none; color: var(--success); font-weight: bold; }
+        .answers-visible { display: inline; }
+        .teacher-toggle { margin-bottom: 1rem; font-size: 0.9rem; }
+
+        /* --- CONTROLS --- */
+        footer {
+            background: var(--white);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #ddd;
+        }
+        .slide-counter { font-weight: bold; color: var(--text-light); }
+        .nav-buttons { display: flex; gap: 10px; }
+
+        /* --- TOAST --- */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; }
+
+        /* --- PRINT STYLES --- */
+        @media print {
+            body { height: auto; overflow: visible; background: white; }
+            header, footer, .slide:not(.active), .teacher-toggle, .controls { display: none !important; }
+            main { padding: 0; margin: 0; display: block; }
+            .slide.active { 
+                display: block; 
+                box-shadow: none; 
+                border: none; 
+                padding: 0; 
+                width: 100%; 
+                max-width: 100%; 
+            }
+            .paper-sheet { border: none; box-shadow: none; padding: 0; }
+            .print-only-header { display: block; text-align: center; margin-bottom: 20px; }
+        }
+        .print-only-header { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="header-title">
+            <h1>Engineering Design - Unit 3: Design</h1>
+            <span>Lesson: Concept Generation & Selection</span>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main id="slideContainer">
+
+        <!-- Slide 1: Lesson Objective -->
+        <div class="slide active">
+            <span class="tag">Overview</span>
+            <h2>Lesson Objectives</h2>
+            <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                <div style="flex: 1;">
+                    <h3>🎯 Session 1 (45 min)</h3>
+                    <ul>
+                        <li>Understand the importance of ideation in the Engineering Design Process.</li>
+                        <li>Differentiate between <strong>Criteria</strong> (goals) and <strong>Constraints</strong> (limitations).</li>
+                        <li>Learn how to use a <strong>Decision Matrix</strong> to select the best design.</li>
+                    </ul>
+                </div>
+                <div style="flex: 1;">
+                    <h3>🛠 Session 2 (45 min)</h3>
+                    <ul>
+                        <li>Apply brainstorming techniques to generate multiple solutions.</li>
+                        <li>Collaboratively evaluate designs using a weighted matrix.</li>
+                        <li>Justify the final design selection.</li>
+                    </ul>
+                </div>
+            </div>
+            <br>
+            <p><strong>Materials Needed:</strong> Sticky notes, whiteboard/markers, Projector, printed homework sheets.</p>
+        </div>
+
+        <!-- Slide 2: Engage -->
+        <div class="slide">
+            <span class="tag engage">Engage</span>
+            <h2>Starter Activity: The "Crazy" Design</h2>
+            <div class="video-placeholder" onclick="alert('In a real classroom, this would play a YouTube video (e.g., Rube Goldberg machines or a Design Fail compilation).')">
+                <div class="play-btn">▶</div>
+                <div style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 5px;">
+                    Video: "Worst Product Designs Ever"
+                </div>
+            </div>
+            <h3>Discussion Question (5 min):</h3>
+            <p>Why do you think these products failed? Did they fail because of <strong>bad ideas</strong> or because they didn't meet <strong>user needs</strong>?</p>
+            <p><em>Teacher Note: Guide students toward the concept that having a design is not enough; it must meet criteria and constraints.</em></p>
+        </div>
+
+        <!-- Slide 3: Explore (Brainstorming) -->
+        <div class="slide">
+            <span class="tag explore">Explore</span>
+            <h2>Generating Concepts</h2>
+            <p>Before we can select a design, we need options. Engineering is not about your first idea; it's about your best idea.</p>
+            
+            <div style="background: #e3f2fd; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+                <h3>Mini-Activity: "100 Uses for a Paperclip"</h3>
+                <p>You have 2 minutes. Write down as many uses for a paperclip as possible.</p>
+                <ul>
+                    <li><strong>Rule 1:</strong> No judgment. (Crazy ideas are welcome).</li>
+                    <li><strong>Rule 2:</strong> Build on others' ideas.</li>
+                    <li><strong>Rule 3:</strong> Quantity over quality.</li>
+                </ul>
+            </div>
+            <p><em>After timer: Ask students to share their wildest idea. Explain that this divergent thinking is crucial in Step 3 of the Engineering Design Process.</em></p>
+        </div>
+
+        <!-- Slide 4: Explain (Theory) -->
+        <div class="slide">
+            <span class="tag explain">Explain</span>
+            <h2>Criteria vs. Constraints</h2>
+            <p>To evaluate designs fairly, we must define the rules of the game.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div style="border: 2px solid var(--primary); padding: 1rem; border-radius: 8px;">
+                    <h3 style="color: var(--primary);">🎯 Criteria</h3>
+                    <p>What the design <strong>must do</strong> to be successful. These are the goals.</p>
+                    <p><em>Example:</em> The bridge must hold 10kg. The app must be easy to use.</p>
+                </div>
+                <div style="border: 2px solid var(--accent); padding: 1rem; border-radius: 8px;">
+                    <h3 style="color: var(--accent);">⛓️ Constraints</h3>
+                    <p>Limitations placed on the design. Time, money, materials, physics.</p>
+                    <p><em>Example:</em> Must cost under $50. Must be built in 2 days. Only use cardboard.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Explain (The Matrix) -->
+        <div class="slide">
+            <span class="tag explain">Explain</span>
+            <h2>The Decision Matrix (Pugh Chart)</h2>
+            <p>How do we pick the winner when we have 3 good ideas? We use data. A Decision Matrix compares concepts against your criteria.</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Criteria</th>
+                        <th>Weight (1-5)</th>
+                        <th>Idea A</th>
+                        <th>Idea B</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Durability</td>
+                        <td>5 (High)</td>
+                        <td>3 (Okay)</td>
+                        <td>5 (Great)</td>
+                    </tr>
+                    <tr>
+                        <td>Cost</td>
+                        <td>3 (Med)</td>
+                        <td>4 (Cheap)</td>
+                        <td>2 (Expensive)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Score</strong></td>
+                        <td>-</td>
+                        <td>27</td>
+                        <td>31 (Winner)</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><em><strong>Calculation:</strong> (Rating x Weight) = Score. Sum the scores.</em></p>
+        </div>
+
+        <!-- Slide 6: Extend (Class Exercise) -->
+        <div class="slide">
+            <span class="tag extend">Extend</span>
+            <h2>Class Exercise: The Water Bottle Challenge</h2>
+            <p><strong>Scenario:</strong> Design a water bottle for hikers.</p>
+            <p><strong>Criteria & Constraints:</strong></p>
+            <ul>
+                <li>Must hold at least 500ml (Criterion).</li>
+                <li>Must fit in a backpack side pocket (Constraint).</li>
+                <li>Must keep water cold for 4 hours (Criterion).</li>
+            </ul>
+
+            <div style="background: #f9f9f9; padding: 1rem; border: 1px dashed #ccc;">
+                <h3>Task (15 min):</h3>
+                <ol>
+                    <li>Individually: Sketch 2 distinct bottle designs.</li>
+                    <li>Pair up: Exchange sketches.</li>
+                    <li>Partner: Fill out a mini-matrix for your partner's designs to decide which one they should build.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Slide 7: Evaluate (Exit Ticket) -->
+        <div class="slide">
+            <span class="tag evaluate">Evaluate</span>
+            <h2>Exit Ticket</h2>
+            <p>Complete this before leaving. (Click to select)</p>
+            
+            <form id="exitTicketForm" onsubmit="handleExitTicket(event)">
+                <div style="margin-bottom: 1rem;">
+                    <label><strong>1. What is the difference between a Criterion and a Constraint?</strong></label><br>
+                    <textarea rows="3" style="width: 100%; margin-top: 5px; padding: 5px;" placeholder="Type your answer here..."></textarea>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label><strong>2. Why do engineers use Decision Matrices?</strong></label><br>
+                    <select style="width: 100%; padding: 8px; margin-top: 5px;">
+                        <option value="">Select an answer...</option>
+                        <option value="wrong">To make the process take longer</option>
+                        <option value="correct">To remove bias and make objective choices</option>
+                        <option value="wrong">To generate new ideas</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn">Submit Exit Ticket</button>
+            </form>
+        </div>
+
+        <!-- Slide 8: Homework & Mark Scheme -->
+        <div class="slide">
+            <span class="tag">Homework</span>
+            <h2>Unit 3 Homework: Design Selection</h2>
+            
+            <div class="teacher-toggle">
+                <label>
+                    <input type="checkbox" id="toggleAnswers" onchange="toggleMarkScheme()"> Show Mark Scheme (Teacher View)
+                </label>
+                <button class="btn-outline" style="float: right; font-size: 0.8rem; padding: 5px 10px;" onclick="window.print()">🖨️ Print Worksheet</button>
+            </div>
+
+            <!-- Printable Paper Area -->
+            <div class="paper-sheet">
+                <div class="print-only-header">
+                    <h2>Engineering Design - Unit 3 Homework</h2>
+                    <p>Name: _____________________________ Date: _____________</p>
+                </div>
+                
+                <h3>Scenario: The "Perfect" Backpack</h3>
+                <p>You are designing a backpack for students. Identify 3 Criteria and 3 Constraints below.</p>
+                
+                <table style="width: 100%; margin-bottom: 20px;">
+                    <tr>
+                        <th>Criteria (Goals)</th>
+                        <th>Constraints (Limitations)</th>
+                    </tr>
+                    <tr>
+                        <td>1. <div class="handwriting-lines"></div></td>
+                        <td>1. <div class="handwriting-lines"></div></td>
+                    </tr>
+                    <tr>
+                        <td>2. <div class="handwriting-lines"></div></td>
+                        <td>2. <div class="handwriting-lines"></div></td>
+                    </tr>
+                    <tr>
+                        <td>3. <div class="handwriting-lines"></div></td>
+                        <td>3. <div class="handwriting-lines"></div></td>
+                    </tr>
+                </table>
+
+                <p><strong>Mark Scheme:</strong> <span class="answers-hidden">1 pt per correct item. Criteria must be desirable features (e.g., comfortable, waterproof). Constraints must be limitations (e.g., Cost < $50, Weight < 1kg).</span></p>
+
+                <h3>Decision Matrix Practice</h3>
+                <p>Calculate the total score for Design A.</p>
+                <table>
+                    <tr>
+                        <th>Criteria</th>
+                        <th>Weight</th>
+                        <th>Design A Rating (1-5)</th>
+                        <th>Score (W x R)</th>
+                    </tr>
+                    <tr>
+                        <td>Comfort</td>
+                        <td>5</td>
+                        <td>4</td>
+                        <td>
+                            <div class="handwriting-lines"></div>
+                            <span class="answers-hidden"><strong>(Ans: 20)</strong></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Style</td>
+                        <td>2</td>
+                        <td>3</td>
+                        <td>
+                            <div class="handwriting-lines"></div>
+                            <span class="answers-hidden"><strong>(Ans: 6)</strong></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Durability</td>
+                        <td>4</td>
+                        <td>2</td>
+                        <td>
+                            <div class="handwriting-lines"></div>
+                            <span class="answers-hidden"><strong>(Ans: 8)</strong></span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>TOTAL</strong></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>
+                            <div class="handwriting-lines"></div>
+                            <span class="answers-hidden"><strong>(Total Ans: 34)</strong></span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Slide 9: References -->
+        <div class="slide">
+            <span class="tag">Resources</span>
+            <h2>References & Further Reading</h2>
+            <ul>
+                <li><a href="https://www.nasa.gov/audience/forstudents/5-8/features/nasa-knows/what-is-engineering-design-58.html" target="_blank" style="color: var(--primary);">NASA - What is Engineering Design?</a></li>
+                <li><a href="https://www.teachengineering.org/" target="_blank" style="color: var(--primary);">TeachEngineering.org (Curriculum Resources)</a></li>
+                <li><strong>Book Reference:</strong> "Engineering Design: An Introduction" (Chapter 3 - Concept Generation).</li>
+                <li><strong>Video Resource:</strong> "Deep Dive" by IDEO (Documentary on Design Process).</li>
+            </ul>
+            <br>
+            <p><strong>Teacher Note for Next Class:</strong> Collect homework. Next unit will cover "Prototyping and Testing".</p>
+        </div>
+
+    </main>
+
+    <!-- Footer Controls -->
+    <footer>
+        <div class="slide-counter">Slide <span id="currentSlideNum">1</span> of <span id="totalSlides">9</span></div>
+        <div class="nav-buttons">
+            <button class="btn btn-outline" id="prevBtn" onclick="changeSlide(-1)">Previous</button>
+            <button class="btn" id="nextBtn" onclick="changeSlide(1)">Next</button>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Element -->
+    <div id="toast" class="toast">Exit Ticket Submitted Successfully!</div>
+
+    <script>
+        // --- SLIDESHOW LOGIC ---
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const progressBar = document.getElementById('progressBar');
+        const currentSlideNum = document.getElementById('currentSlideNum');
+        const totalSlidesNum = document.getElementById('totalSlides');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        // Initialize
+        totalSlidesNum.textContent = totalSlides;
+        updateUI();
+
+        function updateUI() {
+            // Show current slide
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                }
+            });
+
+            // Update Progress
+            const progressPercent = ((currentSlide + 1) / totalSlides) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+
+            // Update Counter
+            currentSlideNum.textContent = currentSlide + 1;
+
+            // Button States
+            prevBtn.disabled = currentSlide === 0;
+            prevBtn.style.opacity = currentSlide === 0 ? '0.5' : '1';
+            
+            nextBtn.textContent = currentSlide === totalSlides - 1 ? "Finish" : "Next";
+        }
+
+        function changeSlide(direction) {
+            const newSlide = currentSlide + direction;
+            if (newSlide >= 0 && newSlide < totalSlides) {
+                currentSlide = newSlide;
+                updateUI();
+            }
+        }
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+        });
+
+        // --- INTERACTIVE FEATURES ---
+
+        // Toggle Mark Scheme
+        function toggleMarkScheme() {
+            const checkBox = document.getElementById('toggleAnswers');
+            const answers = document.querySelectorAll('.answers-hidden');
+            
+            answers.forEach(ans => {
+                if(checkBox.checked) {
+                    ans.classList.remove('answers-hidden');
+                    ans.classList.add('answers-visible');
+                } else {
+                    ans.classList.add('answers-hidden');
+                    ans.classList.remove('answers-visible');
+                }
+            });
+        }
+
+        // Exit Ticket Handling
+        function handleExitTicket(e) {
+            e.preventDefault();
+            // In a real app, this would send data to a server
+            // Here we show visual feedback
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            
+            // Clear form
+            e.target.reset();
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
