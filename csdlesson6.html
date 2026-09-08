@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS Discovery: Hexadecimal (IGCSE)</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --slide-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --accent-color: #00d4ff; /* Cyan for CS/Tech feel */
+            --secondary-accent: #ff0055;
+            --text-muted: #a0a0a0;
+            --code-bg: #2d2d2d;
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevent scrolling, treat as app */
+        }
+
+        /* --- Layout --- */
+        header {
+            padding: 15px 30px;
+            background: #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--accent-color);
+            height: 60px;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .phase-badge {
+            background: var(--accent-color);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        main {
+            flex: 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* --- Slides --- */
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            transform: scale(0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 60px;
+            text-align: center;
+            overflow-y: auto; /* Allow scroll if content is tall */
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+            z-index: 10;
+        }
+
+        .slide-content {
+            max-width: 900px;
+            width: 100%;
+            background: var(--slide-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: left;
+        }
+
+        h2 {
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #fff;
+            margin: 20px 0 10px;
+        }
+
+        p, li {
+            line-height: 1.6;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        code {
+            font-family: var(--font-mono);
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #ff9e64;
+        }
+
+        /* --- Tables & Grid --- */
+        .hex-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .hex-card {
+            background: #333;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #444;
+        }
+        
+        .hex-val {
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        
+        .bin-val {
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            border: 1px solid #555;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        th {
+            background: #2a2a2a;
+            color: var(--accent-color);
+        }
+
+        /* --- Interactive Elements --- */
+        .converter-box {
+            background: #252525;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--accent-color);
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        input[type="number"], input[type="text"] {
+            background: #333;
+            border: 1px solid #555;
+            color: white;
+            padding: 10px;
+            font-size: 1.2rem;
+            width: 200px;
+            text-align: center;
+            border-radius: 4px;
+            margin: 10px;
+        }
+
+        button.action-btn {
+            background: var(--accent-color);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button.action-btn:hover {
+            background: #fff;
+        }
+
+        /* --- Navigation --- */
+        .controls {
+            height: 70px;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            border-top: 1px solid #333;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 2px solid var(--text-muted);
+            color: var(--text-muted);
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 30px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .slide-counter {
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        /* --- Specific Worksheet Styling --- */
+        .worksheet-container {
+            background: white;
+            color: black;
+            padding: 40px;
+            border-radius: 0;
+            box-shadow: none;
+            text-align: left;
+        }
+        
+        .worksheet-container h2 { color: #333; border-bottom: 2px solid #333; }
+        .worksheet-container h3 { color: #000; margin-top: 30px; }
+        .worksheet-container p { color: #222; }
+        
+        .answer-line {
+            border-bottom: 1px solid #333;
+            display: inline-block;
+            width: 150px;
+            margin-left: 10px;
+        }
+
+        .worksheet-box {
+            border: 2px solid #000;
+            padding: 15px;
+            margin: 10px 0;
+            min-height: 80px;
+        }
+
+        /* --- Utility --- */
+        .hidden { display: none; }
+        .teacher-note { color: var(--secondary-accent); font-style: italic; font-size: 0.9rem; margin-top: 5px; }
+        .big-text { font-size: 2rem; font-weight: bold; text-align: center; margin: 20px 0; color: var(--accent-color); }
+
+        /* --- Print Styles for Homework --- */
+        @media print {
+            body { background: white; height: auto; display: block; overflow: visible; }
+            header, .controls, .slide:not(.active) { display: none !important; }
+            .slide.active { 
+                position: static; 
+                opacity: 1; 
+                visibility: visible; 
+                transform: none; 
+                display: block; 
+                height: auto;
+                padding: 0;
+            }
+            .slide-content {
+                box-shadow: none;
+                background: white;
+                color: black;
+                padding: 0;
+                max-width: 100%;
+            }
+            /* Force the worksheet slide to be the only thing visible if we are printing specifically */
+            #slide-homework .slide-content {
+                background: white !important;
+                color: black !important;
+            }
+            #slide-homework h2, #slide-homework h3 { color: #000 !important; border-color: #000 !important; }
+            #slide-homework p, #slide-homework li { color: #000 !important; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Computer Science Discovery: Hexadecimal</h1>
+        <div id="phase-indicator" class="phase-badge">Engage</div>
+        <button class="action-btn" onclick="toggleTeacherMode()" style="font-size: 0.8rem; padding: 5px 10px;">Toggle Answers</button>
+    </header>
+
+    <main id="main-container">
+        <!-- Slide 1: Title & Objectives -->
+        <section class="slide active" data-phase="Engage">
+            <div class="slide-content">
+                <h2>Lesson Objectives</h2>
+                <p>By the end of this 45-minute session, you will be able to:</p>
+                <ul>
+                    <li>Understand what the <strong>Hexadecimal</strong> number system is and why we use it.</li>
+                    <li>Convert decimal numbers to hexadecimal and vice versa.</li>
+                    <li>Convert binary numbers to hexadecimal and vice versa.</li>
+                    <li>Identify real-world uses of hexadecimal in Computing (IGCSE context).</li>
+                </ul>
+                <div class="teacher-note hidden">
+                    Teacher: Briefly mention the connection to Engineering Design (color codes, memory addressing).
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 2: Starter Activity (Engage) -->
+        <section class="slide" data-phase="Engage">
+            <div class="slide-content">
+                <h2>Starter Activity: The Language of Color</h2>
+                <p>Engineers and Web Designers often use "Hex Codes" to define colors.</p>
+                <div style="display: flex; gap: 20px; justify-content: center; margin: 20px 0;">
+                    <div style="background: #FF0000; padding: 20px; border-radius: 8px;">
+                        <strong>#FF0000</strong><br>Red
+                    </div>
+                    <div style="background: #00FF00; padding: 20px; border-radius: 8px;">
+                        <strong>#00FF00</strong><br>Green
+                    </div>
+                    <div style="background: #0000FF; padding: 20px; border-radius: 8px;">
+                        <strong>#0000FF</strong><br>Blue
+                    </div>
+                    <div style="background: #FFFF00; padding: 20px; border-radius: 8px;">
+                        <strong>#FFFF00</strong><br>Yellow
+                    </div>
+                </div>
+                <p><strong>Discussion:</strong> Why do you we think we use letters (A-F) mixed with numbers to represent colors? Why not just use Decimal (0-255)?</p>
+                <div class="teacher-note hidden">
+                    Answer: It's much more concise to write #FFFFFF than (255, 255, 255). Also relates to grouping bits (bytes).
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 3: What is Hexadecimal? (Explain) -->
+        <section class="slide" data-phase="Explain">
+            <div class="slide-content">
+                <h2>What is Hexadecimal?</h2>
+                <p>Hexadecimal (often shortened to <strong>Hex</strong>) is a <strong>Base-16</strong> number system.</p>
+                <ul>
+                    <li><strong>Decimal:</strong> Base-10 (Digits 0-9). 10 digits total.</li>
+                    <li><strong>Binary:</strong> Base-2 (Digits 0-1). 2 digits total.</li>
+                    <li><strong>Hexadecimal:</strong> Base-16. Needs 16 digits!</li>
+                </ul>
+                <p>We use 0-9, then we use letters A-F to represent values 10-15.</p>
+                
+                <div class="hex-grid">
+                    <div class="hex-card"><div class="hex-val">0</div><div class="bin-val">Zero</div></div>
+                    <div class="hex-card"><div class="hex-val">...</div><div class="bin-val">...</div></div>
+                    <div class="hex-card"><div class="hex-val">9</div><div class="bin-val">Nine</div></div>
+                    <div class="hex-card"><div class="hex-val">A</div><div class="bin-val">10</div></div>
+                    <div class="hex-card"><div class="hex-val">B</div><div class="bin-val">11</div></div>
+                    <div class="hex-card"><div class="hex-val">C</div><div class="bin-val">12</div></div>
+                    <div class="hex-card"><div class="hex-val">D</div><div class="bin-val">13</div></div>
+                    <div class="hex-card"><div class="hex-val">E</div><div class="bin-val">14</div></div>
+                    <div class="hex-card"><div class="hex-val">F</div><div class="bin-val">15</div></div>
+                </div>
+                <p class="highlight">Note: In exams, you might see Hex written with a subscript <code>16</code> or prefixed with <code>0x</code>. E.g., <code>A1<sub>16</sub></code> or <code>0xA1</code>.</p>
+            </div>
+        </section>
+
+        <!-- Slide 4: Decimal to Hexadecimal (Explain) -->
+        <section class="slide" data-phase="Explain">
+            <div class="slide-content">
+                <h2>Decimal to Hexadecimal</h2>
+                <p><strong>Method:</strong> Repeated Division by 16.</p>
+                <p>1. Divide the decimal number by 16.<br>
+                   2. Write down the <strong>Remainder</strong>.<br>
+                   3. Divide the answer (quotient) by 16 again.<br>
+                   4. Repeat until the quotient is 0.<br>
+                   5. Read the remainders from <strong>Bottom to Top</strong>.</p>
+
+                <div style="background: #222; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                    <h3>Example: Convert <span style="color:var(--accent-color)">200<sub>10</sub></span> to Hex</h3>
+                    <table style="margin-top: 10px;">
+                        <tr>
+                            <td>200 ÷ 16 = 12</td>
+                            <td>Remainder <strong>8</strong></td>
+                        </tr>
+                        <tr>
+                            <td>12 ÷ 16 = 0</td>
+                            <td>Remainder <strong>12</strong> (which is <strong>C</strong> in Hex)</td>
+                        </tr>
+                    </table>
+                    <p>Reading bottom to top: <strong>C8</strong></p>
+                    <p class="big-text">200<sub>10</sub> = C8<sub>16</sub></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 5: Hexadecimal to Decimal (Explain) -->
+        <section class="slide" data-phase="Explain">
+            <div class="slide-content">
+                <h2>Hexadecimal to Decimal</h2>
+                <p><strong>Method:</strong> Multiplying by Powers of 16.</p>
+                <p>1. Write out the Hex digits.<br>
+                   2. Assign powers of 16 (16^0, 16^1, 16^2...).<br>
+                   3. Multiply the Hex digit value by the power.<br>
+                   4. Add the results together.</p>
+
+                <div style="background: #222; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                    <h3>Example: Convert <span style="color:var(--accent-color)">2A<sub>16</sub></span> to Decimal</h3>
+                    <div style="text-align: left; margin: 15px auto; width: fit-content;">
+                        <p>Digits: <strong>2</strong> and <strong>A</strong> (Value 10)</p>
+                        <p>Position of '2': 16<sup>1</sup> (16) &rarr; 2 × 16 = <strong>32</strong></p>
+                        <p>Position of 'A': 16<sup>0</sup> (1)  &rarr; 10 × 1 = <strong>10</strong></p>
+                        <hr style="border-color: #555; margin: 10px 0;">
+                        <p>Total: 32 + 10 = <strong>42</strong></p>
+                    </div>
+                    <p class="big-text">2A<sub>16</sub> = 42<sub>10</sub></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 6: Binary to Hexadecimal (Explain) -->
+        <section class="slide" data-phase="Explain">
+            <div class="slide-content">
+                <h2>Binary to Hexadecimal (Crucial for IGCSE)</h2>
+                <p>This is the most common conversion in Computing. We group bits into "nibbles" (4 bits).</p>
+                <p><strong>Method:</strong></p>
+                <ol>
+                    <li>Group the binary digits into sets of 4, starting from the <strong>RIGHT</strong>.</li>
+                    <li>If the last group on the left has fewer than 4 bits, add leading zeros.</li>
+                    <li>Convert each 4-bit group (nibble) to its Hex digit equivalent.</li>
+                </ol>
+
+                <h3>Reference Table</h3>
+                <div class="hex-grid" style="grid-template-columns: repeat(8, 1fr); font-size: 0.8rem;">
+                    <div class="hex-card"><div class="bin-val">0000</div><div class="hex-val">0</div></div>
+                    <div class="hex-card"><div class="bin-val">0001</div><div class="hex-val">1</div></div>
+                    <div class="hex-card"><div class="bin-val">0010</div><div class="hex-val">2</div></div>
+                    <div class="hex-card"><div class="bin-val">0011</div><div class="hex-val">3</div></div>
+                    <div class="hex-card"><div class="bin-val">0100</div><div class="hex-val">4</div></div>
+                    <div class="hex-card"><div class="bin-val">0101</div><div class="hex-val">5</div></div>
+                    <div class="hex-card"><div class="bin-val">0110</div><div class="hex-val">6</div></div>
+                    <div class="hex-card"><div class="bin-val">0111</div><div class="hex-val">7</div></div>
+                    <div class="hex-card"><div class="bin-val">1000</div><div class="hex-val">8</div></div>
+                    <div class="hex-card"><div class="bin-val">1001</div><div class="hex-val">9</div></div>
+                    <div class="hex-card"><div class="bin-val">1010</div><div class="hex-val">A</div></div>
+                    <div class="hex-card"><div class="bin-val">1011</div><div class="hex-val">B</div></div>
+                    <div class="hex-card"><div class="bin-val">1100</div><div class="hex-val">C</div></div>
+                    <div class="hex-card"><div class="bin-val">1101</div><div class="hex-val">D</div></div>
+                    <div class="hex-card"><div class="bin-val">1110</div><div class="hex-val">E</div></div>
+                    <div class="hex-card"><div class="bin-val">1111</div><div class="hex-val">F</div></div>
+                </div>
+                
+                <p><strong>Example:</strong> 111011<sub>2</sub> &rarr; <code>0011 1011</code> &rarr; <strong>3B<sub>16</sub></strong></p>
+            </div>
+        </section>
+
+        <!-- Slide 7: Hexadecimal to Binary (Explain) -->
+        <section class="slide" data-phase="Explain">
+            <div class="slide-content">
+                <h2>Hexadecimal to Binary</h2>
+                <p><strong>Method:</strong> Reverse of the previous slide.</p>
+                <ol>
+                    <li>Write down the 4-bit binary equivalent for each Hex digit.</li>
+                    <li>Combine them together.</li>
+                    <li>Remove any leading zeros (optional, but good practice).</li>
+                </ol>
+
+                <div style="background: #222; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                    <h3>Example: Convert <span style="color:var(--accent-color)">E5<sub>16</sub></span> to Binary</h3>
+                    <div style="display: flex; gap: 20px; justify-content: center; margin-top: 15px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; color: var(--secondary-accent);">E</div>
+                            <div style="color: var(--accent-color);">1110</div>
+                        </div>
+                        <div style="font-size: 2rem; padding-top: 10px;">+</div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; color: var(--secondary-accent);">5</div>
+                            <div style="color: var(--accent-color);">0101</div>
+                        </div>
+                    </div>
+                    <hr style="border-color: #555; margin: 20px 0;">
+                    <p>Result: <strong>11100101<sub>2</sub></strong></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 8: Explore / Interactive Tool -->
+        <section class="slide" data-phase="Explore">
+            <div class="slide-content">
+                <h2>Interactive Converter</h2>
+                <p>Use this tool to check your understanding. Enter a number in one field to see the others update.</p>
+                
+                <div class="converter-box">
+                    <div style="margin-bottom: 15px;">
+                        <label>Decimal (Base 10)</label><br>
+                        <input type="number" id="inputDec" placeholder="e.g. 255" oninput="convertFromDec()">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label>Hexadecimal (Base 16)</label><br>
+                        <input type="text" id="inputHex" placeholder="e.g. FF" oninput="convertFromHex()">
+                    </div>
+                    <div>
+                        <label>Binary (Base 2)</label><br>
+                        <input type="text" id="inputBin" placeholder="e.g. 11111111" oninput="convertFromBin()">
+                    </div>
+                </div>
+                <p class="teacher-note hidden">Teacher: Ask students to try their birth month or age.</p>
+            </div>
+        </section>
+
+        <!-- Slide 9: Exercise / Extend -->
+        <section class="slide" data-phase="Extend">
+            <div class="slide-content">
+                <h2>Class Exercise</h2>
+                <p>Complete the following conversions on your own or with a partner.</p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="background: #252525; padding: 15px; border-radius: 8px;">
+                        <h3>Part A: Decimal &rarr; Hex</h3>
+                        <ol style="margin-left: 20px;">
+                            <li>14<sub>10</sub> = <span class="teacher-answer hidden">E</span></li>
+                            <li>31<sub>10</sub> = <span class="teacher-answer hidden">1F</span></li>
+                            <li>255<sub>10</sub> = <span class="teacher-answer hidden">FF</span></li>
+                        </ol>
+                    </div>
+                    <div style="background: #252525; padding: 15px; border-radius: 8px;">
+                        <h3>Part B: Hex &rarr; Binary</h3>
+                        <ol style="margin-left: 20px;">
+                            <li>A<sub>16</sub> = <span class="teacher-answer hidden">1010</span></li>
+                            <li>1C<sub>16</sub> = <span class="teacher-answer hidden">00011100</span></li>
+                            <li>F0<sub>16</sub> = <span class="teacher-answer hidden">11110000</span></li>
+                        </ol>
+                    </div>
+                </div>
+                <p style="margin-top: 20px;"><strong>Challenge:</strong> Why is Hexadecimal used to represent MAC addresses (e.g., 00:1A:2B:3C:4D:5E)?</p>
+                <p class="teacher-answer hidden">Answer: It represents 48 bits (6 bytes) in a compact, human-readable format that is easier to memorize or dictate than 48 individual 0s and 1s.</p>
+            </div>
+        </section>
+
+        <!-- Slide 10: Exit Ticket (Evaluate) -->
+        <section class="slide" data-phase="Evaluate">
+            <div class="slide-content">
+                <h2>Exit Ticket</h2>
+                <p>Before you leave, write your answers to these 3 questions on a sticky note or piece of paper.</p>
+                <div style="text-align: left; margin-top: 20px; border: 1px solid #555; padding: 20px;">
+                    <p><strong>1.</strong> What is the decimal value of the Hex digit 'C'?</p>
+                    <div class="answer-line"></div>
+                    
+                    <p><strong>2.</strong> Convert the Binary number <code>1011</code> to Hexadecimal.</p>
+                    <div class="answer-line"></div>
+                    
+                    <p><strong>3.</strong> Name one reason why Computer Scientists use Hexadecimal.</p>
+                    <div class="answer-line"></div>
+                </div>
+                <p class="teacher-note hidden">Teacher Answers: 1. 12, 2. B, 3. Color codes, memory addressing, shorter to write than binary.</p>
+            </div>
+        </section>
+
+        <!-- Slide 11: Homework (Printable) -->
+        <section class="slide" id="slide-homework" data-phase="Evaluate">
+            <div class="slide-content worksheet-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;" class="no-print">
+                    <span><strong>Homework Assignment</strong></span>
+                    <button class="action-btn" onclick="window.print()">Print Homework View</button>
+                </div>
+                
+                <h2>Homework: Hexadecimal Number Systems</h2>
+                <p><strong>Name:</strong> _________________________________ &nbsp;&nbsp; <strong>Date:</strong> _________________</p>
+                <p><strong>Instructions:</strong> Complete all questions showing your working where necessary. This homework is worth 10 points.</p>
+
+                <h3>Part 1: Conversions (4 pts)</h3>
+                <p>1. Convert the following Decimal numbers to Hexadecimal:</p>
+                <div class="worksheet-box">
+                    a) 25<sub>10</sub> = <span class="answer-line" style="width: 100px;"></span><br><br>
+                    b) 100<sub>10</sub> = <span class="answer-line" style="width: 100px;"></span>
+                </div>
+
+                <p>2. Convert the following Hexadecimal numbers to Decimal:</p>
+                <div class="worksheet-box">
+                    a) 19<sub>16</sub> = <span class="answer-line" style="width: 100px;"></span><br><br>
+                    b) 2D<sub>16</sub> = <span class="answer-line" style="width: 100px;"></span>
+                </div>
+
+                <h3>Part 2: Binary & Hex (4 pts)</h3>
+                <p>3. Convert the following Binary numbers to Hexadecimal:</p>
+                <div class="worksheet-box">
+                    a) 1101 0011 = <span class="answer-line" style="width: 100px;"></span><br><br>
+                    b) 0001 1111 = <span class="answer-line" style="width: 100px;"></span>
+                </div>
+
+                <h3>Part 3: Application (2 pts)</h3>
+                <p>4. In HTML/CSS, the color white is represented as #FFFFFF. Explain why six digits are used to represent a color on a screen.</p>
+                <div class="worksheet-box" style="min-height: 100px;"></div>
+
+                <div class="no-print" style="margin-top: 30px; padding: 10px; background: #eee; border-left: 4px solid #ccc;">
+                    <strong>Mark Scheme (Teacher Use Only):</strong><br>
+                    1a) 19, 1b) 64<br>
+                    2a) 25, 2b) 45<br>
+                    3a) D3, 3b) 1F<br>
+                    4) Screens use Red, Green, Blue (RGB). Each color uses 1 byte (8 bits). 1 byte in Hex is 2 digits. 3 colors x 2 digits = 6 digits total.
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 12: References -->
+        <section class="slide" data-phase="Evaluate">
+            <div class="slide-content">
+                <h2>References & Further Reading</h2>
+                <ul>
+                    <li><strong>Cambridge IGCSE Computer Science (0478)</strong> - Syllabus Section 1.1 Data Representation.</li>
+                    <li><strong>BBC Bitesize:</strong> <a href="#" style="color:var(--accent-color)">Number systems - Hexadecimal</a></li>
+                    <li><strong>Khan Academy:</strong> <a href="#" style="color:var(--accent-color)">Binary and Hexadecimal overview</a></li>
+                    <li><strong>CSS Colors:</strong> <a href="#" style="color:var(--accent-color)">https://www.w3schools.com/colors/colors_hexadecimal.asp</a></li>
+                </ul>
+                <div style="margin-top: 40px; text-align: center;">
+                    <h3>End of Lesson</h3>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div class="controls">
+        <button class="nav-btn" onclick="changeSlide(-1)">&#8592; Prev</button>
+        <span class="slide-counter">Slide <span id="current-slide-num">1</span> / <span id="total-slides">12</span></span>
+        <button class="nav-btn" onclick="changeSlide(1)">Next &#8594;</button>
+    </div>
+
+    <script>
+        // State
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const phaseIndicator = document.getElementById('phase-indicator');
+        let teacherMode = false;
+
+        // Init
+        document.getElementById('total-slides').innerText = totalSlides;
+        updateSlideDisplay();
+
+        // Navigation Functions
+        function changeSlide(direction) {
+            const next = currentSlide + direction;
+            if (next >= 0 && next < totalSlides) {
+                currentSlide = next;
+                updateSlideDisplay();
+            }
+        }
+
+        function goToSlide(index) {
+            if(index >= 0 && index < totalSlides) {
+                currentSlide = index;
+                updateSlideDisplay();
+            }
+        }
+
+        function updateSlideDisplay() {
+            // Hide all slides
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                    
+                    // Update Phase Badge
+                    const phase = slide.getAttribute('data-phase');
+                    if(phase) phaseIndicator.innerText = phase;
+                }
+            });
+            document.getElementById('current-slide-num').innerText = currentSlide + 1;
+        }
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+        });
+
+        // Teacher Mode Toggle
+        function toggleTeacherMode() {
+            teacherMode = !teacherMode;
+            const notes = document.querySelectorAll('.teacher-note, .teacher-answer');
+            notes.forEach(note => {
+                if (teacherMode) {
+                    note.classList.remove('hidden');
+                } else {
+                    note.classList.add('hidden');
+                }
+            });
+        }
+
+        // --- Interactive Converter Logic ---
+        function convertFromDec() {
+            const decInput = document.getElementById('inputDec').value;
+            if (decInput === "") { clearAll(); return; }
+            
+            const decVal = parseInt(decInput, 10);
+            if (isNaN(decVal)) return;
+
+            document.getElementById('inputHex').value = decVal.toString(16).toUpperCase();
+            document.getElementById('inputBin').value = decVal.toString(2);
+        }
+
+        function convertFromHex() {
+            const hexInput = document.getElementById('inputHex').value;
+            if (hexInput === "") { clearAll(); return; }
+            
+            const decVal = parseInt(hexInput, 16);
+            if (isNaN(decVal)) return;
+
+            document.getElementById('inputDec').value = decVal;
+            document.getElementById('inputBin').value = decVal.toString(2);
+        }
+
+        function convertFromBin() {
+            const binInput = document.getElementById('inputBin').value;
+            if (binInput === "") { clearAll(); return; }
+            
+            const decVal = parseInt(binInput, 2);
+            if (isNaN(decVal)) return;
+
+            document.getElementById('inputDec').value = decVal;
+            document.getElementById('inputHex').value = decVal.toString(16).toUpperCase();
+        }
+
+        function clearAll() {
+            document.getElementById('inputDec').value = "";
+            document.getElementById('inputHex').value = "";
+            document.getElementById('inputBin').value = "";
+        }
+    </script>
+</body>
+</html>
