@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 9 — Testing | Cambridge IGCSE Design & Technology</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================
+     Unit 9 — Testing | Minimalist Academic Style
+     Cambridge IGCSE Design & Technology (0445/0979)
+     ============================================ */
+
+  :root {
+    --bg: #FFFFFF;
+    --fg: #111111;
+    --muted: #6B6B6B;
+    --line: #E5E5E5;
+    --accent: #D62828;
+    --code-bg: #F7F7F7;
+    --code-fg: #1A1A1A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 18px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body { min-height: 100vh; overflow-x: hidden; }
+
+  /* ========== Navigation Controls ========== */
+  .controls {
+    position: fixed;
+    bottom: 16px;
+    right: 20px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    background: rgba(255,255,255,0.92);
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    user-select: none;
+  }
+  .controls button {
+    background: none;
+    border: none;
+    color: var(--fg);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    transition: color 0.15s;
+  }
+  .controls button:hover { color: var(--accent); }
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: var(--accent);
+    width: 0%;
+    z-index: 100;
+    transition: width 0.3s ease;
+  }
+
+  /* ========== Slide Deck ========== */
+  #deck {
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  .slide {
+    width: 100vw;
+    min-height: 100vh;
+    padding: 50px 80px 70px 80px;
+    display: none;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+    page-break-after: always;
+    background: var(--bg);
+    overflow: hidden;
+  }
+  .slide.active {
+    display: flex;
+  }
+  /* Allow long slides to scroll within the viewport without breaking layout */
+  .slide.scrollable { overflow-y: auto; justify-content: flex-start; }
+
+  /* Slide footer (number + tag) */
+  .slide-footer {
+    position: absolute;
+    bottom: 18px;
+    left: 80px;
+    right: 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    z-index: 5;
+  }
+  .slide-footer .left { display: flex; align-items: center; gap: 16px; }
+  .slide-footer .accent-dot {
+    width: 8px; height: 8px; background: var(--accent); border-radius: 50%;
+  }
+
+  /* ========== Typography ========== */
+  h1, h2, h3 { font-family: 'Inter', sans-serif; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+  h1 { font-size: 72px; font-weight: 800; }
+  h2 { font-size: 42px; margin-bottom: 22px; }
+  h3 { font-size: 22px; font-weight: 600; margin-bottom: 10px; }
+  p { margin-bottom: 12px; }
+  ul, ol { margin: 8px 0 12px 0; padding-left: 22px; }
+  li { margin-bottom: 6px; line-height: 1.5; }
+
+  .lead { font-size: 19px; color: var(--fg); line-height: 1.45; font-weight: 300; }
+  .muted { color: var(--muted); }
+  .accent { color: var(--accent); font-weight: 600; }
+  .small { font-size: 14px; color: var(--muted); }
+
+  /* ========== Slide Layouts ========== */
+
+  /* Cover */
+  .cover {
+    padding: 60px 80px 80px 80px;
+    justify-content: flex-start;
+  }
+  .cover-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+  .cover-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .cover-meta {
+    text-align: right;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .cover-title {
+    margin: 30px 0 24px 0;
+  }
+  .cover-title h1 {
+    font-size: 88px;
+    margin-bottom: 10px;
+    line-height: 1;
+  }
+  .cover-subtitle {
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--muted);
+  }
+  .cover-line {
+    width: 100px;
+    height: 3px;
+    background: var(--accent);
+    margin: 22px 0;
+  }
+  .cover-image {
+    width: 100%;
+    height: 130px;
+    overflow: hidden;
+    margin-top: 12px;
+  }
+  .cover-image img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(0.3); }
+
+  /* Slide number marker */
+  .section-divider {
+    text-align: center;
+  }
+  .section-divider .big-num {
+    font-size: 200px;
+    font-weight: 800;
+    color: var(--line);
+    line-height: 1;
+    margin-bottom: 20px;
+  }
+  .section-divider .big-num span { color: var(--accent); }
+  .section-divider h2 { text-align: center; margin-bottom: 30px; }
+
+  /* Two-column layout */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 20px;
+  }
+  .col-card {
+    border: 1px solid var(--line);
+    padding: 30px;
+    border-radius: 2px;
+  }
+  .col-card h3 { color: var(--accent); font-size: 22px; margin-bottom: 16px; }
+  .col-card .session-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* Objective list */
+  .objectives {
+    list-style: none;
+    padding: 0;
+    counter-reset: obj-counter;
+  }
+  .objectives li {
+    counter-increment: obj-counter;
+    padding: 14px 0 14px 50px;
+    position: relative;
+    font-size: 20px;
+    line-height: 1.5;
+    border-bottom: 1px solid var(--line);
+  }
+  .objectives li::before {
+    content: counter(obj-counter, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* Code block */
+  pre, code {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    padding: 14px 18px;
+    border-left: 3px solid var(--accent);
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 10px 0;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  code.inline {
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 0.92em;
+    color: var(--accent);
+  }
+  .code-comment { color: #888; font-style: italic; }
+  .code-keyword { color: var(--accent); font-weight: 600; }
+  .code-string { color: #2A7DE1; }
+  .code-error { background: #FFE8E8; display: block; padding: 0 2px; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  th {
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    border-bottom: 2px solid var(--fg);
+  }
+  tr:hover td { background: #FAFAFA; }
+  td.accent-cell { color: var(--accent); font-weight: 600; }
+  td.center { text-align: center; }
+
+  /* Callout */
+  .callout {
+    border-left: 4px solid var(--accent);
+    padding: 14px 18px;
+    background: #FAFAFA;
+    margin: 14px 0;
+    font-size: 16px;
+  }
+  .callout strong { color: var(--accent); }
+
+  /* Tag pills */
+  .pills { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+  .pill {
+    padding: 6px 14px;
+    border: 1px solid var(--line);
+    font-size: 14px;
+    color: var(--fg);
+    border-radius: 2px;
+    background: white;
+  }
+  .pill.accent { background: var(--accent); color: white; border-color: var(--accent); }
+  .pill.dark { background: var(--fg); color: white; border-color: var(--fg); }
+
+  /* Image with caption */
+  .figure {
+    width: 100%;
+    margin: 18px 0;
+  }
+  .figure img {
+    width: 100%;
+    max-height: 360px;
+    object-fit: cover;
+    filter: grayscale(0.15);
+  }
+  .figure .caption {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  /* Layout: split content + image */
+  .split {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+
+  /* Agenda timing strip */
+  .timing-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin: 24px 0;
+  }
+  .timing-card {
+    border: 1px solid var(--line);
+    padding: 16px 14px;
+    text-align: left;
+  }
+  .timing-card .stage {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .timing-card .mins {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .timing-card .desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  /* Trace / test plan table */
+  .trace-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    margin: 12px 0;
+  }
+  .trace-table th, .trace-table td {
+    border: 1px solid var(--line);
+    padding: 4px 8px;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .trace-table th {
+    background: var(--fg);
+    color: white;
+    font-weight: 500;
+    padding: 6px 8px;
+  }
+  .trace-table tr.highlight td {
+    background: #FFF5F5;
+  }
+
+  /* Worksheet */
+  .worksheet {
+    border: 1px solid var(--line);
+    padding: 22px 26px;
+    margin-top: 14px;
+  }
+  .ws-q {
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .ws-q:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .ws-q .q-num {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    font-weight: 600;
+    margin-right: 8px;
+  }
+  .ws-q .q-text { font-size: 16px; line-height: 1.5; }
+
+  /* Exit ticket */
+  .exit-q {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .exit-q:last-child { border-bottom: none; }
+  .exit-q .q-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 34px;
+    color: var(--accent);
+    font-weight: 700;
+    min-width: 52px;
+    line-height: 1;
+  }
+  .exit-q .q-body { font-size: 17px; padding-top: 4px; line-height: 1.5; }
+
+  /* Reference list */
+  .ref-list {
+    list-style: none;
+    padding: 0;
+  }
+  .ref-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 14px;
+    align-items: baseline;
+  }
+  .ref-list li .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+  }
+  .ref-list li .title { font-weight: 500; }
+  .ref-list li a {
+    color: var(--fg);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--muted);
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .ref-list li a:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Big number stat */
+  .stat-block {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin: 20px 0;
+  }
+  .stat-block .stat {
+    padding: 16px 0;
+    text-align: left;
+  }
+  .stat .num {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat .label {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.35;
+  }
+
+  /* End slide */
+  .end-slide {
+    text-align: center;
+  }
+  .end-slide h2 { font-size: 56px; margin-bottom: 24px; }
+  .end-slide .small-tag {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+
+  /* Slide title pattern */
+  .slide-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 22px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--fg);
+  }
+  .slide-title-row h2 { margin-bottom: 0; font-size: 42px; }
+  .slide-title-row .stage-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* Print rules */
+  @media print {
+    .controls, .progress-bar { display: none; }
+    .slide {
+      display: flex !important;
+      page-break-after: always;
+      min-height: 100vh;
+    }
+    .slide.active { display: flex !important; }
+    a { color: var(--fg); text-decoration: none; }
+  }
+
+  /* Help overlay */
+  .help-overlay {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 1px solid var(--line);
+    padding: 30px 40px;
+    z-index: 200;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    display: none;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.08);
+  }
+  .help-overlay.active { display: block; }
+  .help-overlay h4 { font-family: 'Inter', sans-serif; margin-bottom: 14px; }
+  .help-overlay kbd {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #F0F0F0;
+    border: 1px solid #CCC;
+    border-radius: 2px;
+    margin: 0 2px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+<div class="progress-bar" id="progressBar"></div>
+
+<div class="controls">
+  <button id="prevBtn" title="Previous (←)">&#8592;</button>
+  <span id="counter">01 / 33</span>
+  <button id="nextBtn" title="Next (→)">&#8594;</button>
+  <button id="fullscreenBtn" title="Fullscreen (F)">&#x26F6;</button>
+  <button id="helpBtn" title="Help (H)">?</button>
+</div>
+
+<div class="help-overlay" id="helpOverlay">
+  <h4>Keyboard shortcuts</h4>
+  <p><kbd>&#8594;</kbd> <kbd>Space</kbd> Next slide</p>
+  <p><kbd>&#8592;</kbd> Previous slide</p>
+  <p><kbd>Home</kbd> First slide</p>
+  <p><kbd>End</kbd> Last slide</p>
+  <p><kbd>F</kbd> Toggle fullscreen</p>
+  <p><kbd>H</kbd> Toggle this help</p>
+  <p><kbd>Esc</kbd> Close help / exit fullscreen</p>
+  <p><kbd>P</kbd> Print / export PDF</p>
+</div>
+
+<main id="deck">
+
+
+<section class="slide cover active" id="s1">
+  <div class="cover-top">
+    <div class="cover-tag">UNIT 09 / ENGINEERING DESIGN</div>
+    <div class="cover-meta">
+      Cambridge IGCSE Design &amp; Technology 0445 / 0979<br>
+      Unit 9 &mdash; Testing<br>
+      2 sessions &times; 45 minutes
+    </div>
+  </div>
+  <div class="cover-title">
+    <h1>Testing</h1>
+    <div class="cover-subtitle">Prototypes &middot; Materials &middot; Users &middot; Iteration</div>
+  </div>
+  <div class="cover-line"></div>
+  <p class="lead muted">James Dyson built 5,127 prototypes of his first vacuum cleaner before it worked. Testing is what turns a clever idea into a product that actually works in people's hands.</p>
+  <div class="cover-image">
+    <img src="images_eng/prototype_testing.jpg" alt="Engineering prototype testing">
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Cambridge IGCSE Design &amp; Technology</span></div>
+    <div>01 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s2">
+  <div class="slide-title-row">
+    <h2>Lesson at a Glance</h2>
+    <div class="stage-tag">Overview &middot; 90 min total</div>
+  </div>
+  <p class="lead">Two sessions cover the complete Cambridge IGCSE Design &amp; Technology content on <strong>Testing</strong>, structured around the <strong>5E lesson plan</strong>: Engage, Explore, Explain, Extend, Evaluate.</p>
+  <div class="two-col">
+    <div class="col-card">
+      <div class="session-tag">SESSION 1 &middot; 45 MIN</div>
+      <h3>Why &amp; How We Test</h3>
+      <ul>
+        <li><strong>Engage</strong> &mdash; Dyson's 5,127 prototypes story</li>
+        <li><strong>Explore</strong> &mdash; What happens if we don't test?</li>
+        <li><strong>Explain</strong> &mdash; What testing is; types of testing (functional, user, performance, aesthetic, safety, environmental); testing against the specification</li>
+        <li><strong>Extend</strong> &mdash; Classify-the-test worksheet</li>
+        <li><strong>Evaluate</strong> &mdash; Exit ticket (3 questions)</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <div class="session-tag">SESSION 2 &middot; 45 MIN</div>
+      <h3>Test Plans &amp; Iteration</h3>
+      <ul>
+        <li><strong>Engage</strong> &mdash; Famous product failures</li>
+        <li><strong>Explore</strong> &mdash; How do we plan a test?</li>
+        <li><strong>Explain</strong> &mdash; Test plan structure; destructive vs non-destructive testing; materials tests; iterative design</li>
+        <li><strong>Extend</strong> &mdash; Past-paper practice (Cambridge 0445)</li>
+        <li><strong>Evaluate</strong> &mdash; Exit ticket (3 questions)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Lesson Overview</span></div>
+    <div>02 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s3">
+  <div class="slide-title-row">
+    <h2>Lesson Objectives</h2>
+    <div class="stage-tag">Syllabus A04 &middot; A05</div>
+  </div>
+  <p class="lead">By the end of these two sessions, students will be able to:</p>
+  <ol class="objectives">
+    <li>Define <strong>testing</strong> within the design process and explain why testing is essential before manufacture.</li>
+    <li>Identify and describe <strong>six types of testing</strong>: functional, user (ergonomic), performance, aesthetic, safety and environmental.</li>
+    <li>Explain the importance of testing a prototype <strong>against the design specification</strong>.</li>
+    <li>Distinguish between <strong>destructive</strong> and <strong>non-destructive</strong> testing of materials and components.</li>
+    <li>Construct a structured <strong>test plan</strong> that records what is tested, the method, expected result and actual result.</li>
+    <li>Describe the <strong>iterative design process</strong> and explain how testing drives refinement of a 3D-designed product.</li>
+  </ol>
+  <div class="callout">
+    <strong>Exam alignment:</strong> Cambridge IGCSE D&amp;T 0445/0979 Paper 1 assesses testing through short-answer and design-response questions. The coursework project (Component 2 or 4) requires a written testing report against the specification.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Objectives</span></div>
+    <div>03 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide section-divider" id="s4">
+  <div class="big-num">0<span>1</span></div>
+  <h2>Session 1 &mdash; Why &amp; How We Test</h2>
+  <p class="lead muted">45 minutes &middot; Theory-focused</p>
+  <div class="timing-strip" style="max-width: 1000px; margin: 40px auto;">
+    <div class="timing-card">
+      <div class="stage">Engage</div>
+      <div class="mins">5 min</div>
+      <div class="desc">Dyson &amp; the 5,127 prototypes</div>
+    </div>
+    <div class="timing-card">
+      <div class="stage">Explore</div>
+      <div class="mins">5 min</div>
+      <div class="desc">Why testing matters &mdash; pair discussion</div>
+    </div>
+    <div class="timing-card">
+      <div class="stage">Explain</div>
+      <div class="mins">20 min</div>
+      <div class="desc">Types of testing &middot; specification testing</div>
+    </div>
+    <div class="timing-card">
+      <div class="stage">Extend</div>
+      <div class="mins">10 min</div>
+      <div class="desc">Classify-the-test worksheet</div>
+    </div>
+    <div class="timing-card">
+      <div class="stage">Evaluate</div>
+      <div class="mins">5 min</div>
+      <div class="desc">Exit ticket &mdash; 3 questions</div>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Session 1 Agenda</span></div>
+    <div>04 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s5">
+  <div class="slide-title-row">
+    <h2>5,127 Prototypes</h2>
+    <div class="stage-tag">Engage &middot; 5 min</div>
+  </div>
+  <div class="split">
+    <div>
+      <p class="lead">Between <strong>1979 and 1984</strong>, British inventor <strong>James Dyson</strong> built <strong>5,127 prototypes</strong> of his bagless vacuum cleaner before he had a working product.</p>
+      <p>Each prototype failed in a different way &mdash; dust escaped, suction dropped, parts broke, the cyclone clogged. Each failure taught him something specific about what to change in the next version.</p>
+      <p>The final <strong>Dyson Dual Cyclone</strong> became one of the best-selling vacuum cleaners in the world and made Dyson one of the UK's richest engineers.</p>
+      <div class="callout">
+        <strong>Discussion prompt:</strong> What if Dyson had stopped at prototype #100? Why is testing each prototype against the specification more useful than just "trying it and seeing if it works"?
+      </div>
+    </div>
+    <div>
+      <div class="figure">
+        <img src="images_eng/prototype_testing.jpg" alt="Engineer testing a prototype">
+        <div class="caption">Prototype testing &mdash; the heart of iterative design</div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Engage</span></div>
+    <div>05 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s6">
+  <div class="slide-title-row">
+    <h2>Why Does Testing Matter?</h2>
+    <div class="stage-tag">Explore &middot; 5 min</div>
+  </div>
+  <p class="lead">Discuss in pairs &mdash; 2 minutes per question, then share with the class.</p>
+  <ol>
+    <li>Think of a product you own that broke or didn't work as advertised. What should the manufacturer have tested better before selling it?</li>
+    <li>A new <strong>3D-printed phone stand</strong> looks good but slips on a smooth desk. Which kind of testing would have caught this?</li>
+    <li>Imagine you designed a <strong>children's toy</strong>. What types of testing are <em>essential</em> before it can be sold?</li>
+    <li>If a designer skips testing and ships the product, who pays the cost &mdash; the designer, the manufacturer, the user, or society?</li>
+  </ol>
+  <div class="callout">
+    <strong>Key idea:</strong> Testing is how we move from &ldquo;I think it works&rdquo; to <em>&ldquo;I have evidence it works&rdquo;</em>. It protects the user, the manufacturer and the designer's reputation.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Explore</span></div>
+    <div>06 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide section-divider" id="s7">
+  <div class="big-num" style="font-size:120px;">EXPLAIN</div>
+  <h2>Types of Testing</h2>
+  <p class="lead muted">Six categories every designer should know</p>
+  <div class="pills" style="justify-content: center; margin-top: 30px;">
+    <span class="pill">Functional</span>
+    <span class="pill">User (ergonomic)</span>
+    <span class="pill">Performance</span>
+    <span class="pill">Aesthetic</span>
+    <span class="pill">Safety</span>
+    <span class="pill">Environmental</span>
+    <span class="pill">Specification testing</span>
+    <span class="pill">Destructive</span>
+    <span class="pill">Non-destructive</span>
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Explain &mdash; Section Opener</span></div>
+    <div>07 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s8">
+  <div class="slide-title-row">
+    <h2>What Is Testing in Design?</h2>
+    <div class="stage-tag">Explain</div>
+  </div>
+  <p class="lead"><strong>Testing</strong> is the systematic process of checking that a prototype (or product) meets its <strong>design specification</strong> and works as intended for its user.</p>
+  <div class="two-col" style="margin-top: 30px;">
+    <div>
+      <h3>Why we test</h3>
+      <ul>
+        <li>To check the prototype meets the <strong>design specification</strong></li>
+        <li>To find <strong>faults and weaknesses</strong> before manufacture</li>
+        <li>To confirm the product is <strong>safe</strong> for the intended user</li>
+        <li>To gather <strong>evidence</strong> for the design portfolio</li>
+      </ul>
+    </div>
+    <div>
+      <h3>When we test</h3>
+      <ul>
+        <li>After the first <strong>prototype</strong> is made</li>
+        <li>After each <strong>iteration</strong> or refinement</li>
+        <li>Before <strong>mass production</strong> begins</li>
+        <li>As a final <strong>quality check</strong> on the manufactured product</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Cambridge exam tip:</strong> Testing is part of the <em>iterative design cycle</em>: <strong>Design &rarr; Make &rarr; Test &rarr; Evaluate &rarr; Refine</strong>. Each cycle should produce evidence (photos, measurements, user feedback) that justifies the next change.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Explain</span></div>
+    <div>08 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s9">
+  <div class="slide-title-row">
+    <h2>Six Types of Testing</h2>
+    <div class="stage-tag">Explain</div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>What it checks</th>
+        <th>Example test method</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="accent-cell">Functional</td>
+        <td>Does the product do what it was designed to do?</td>
+        <td>Operate the product as the user would; check each function listed in the specification</td>
+      </tr>
+      <tr>
+        <td class="accent-cell">User (ergonomic)</td>
+        <td>Can the intended user operate it comfortably and safely?</td>
+        <td>User trials, observation, questionnaires, anthropometric data</td>
+      </tr>
+      <tr>
+        <td class="accent-cell">Performance</td>
+        <td>Does it meet measurable performance targets (load, speed, durability)?</td>
+        <td>Stress tests, load tests, drop tests, cycle tests</td>
+      </tr>
+      <tr>
+        <td class="accent-cell">Aesthetic</td>
+        <td>Does the appearance match the design intent and appeal to the target market?</td>
+        <td>Focus groups, preference surveys, comparison with moodboard</td>
+      </tr>
+      <tr>
+        <td class="accent-cell">Safety</td>
+        <td>Does it comply with safety standards and pose no risk to the user?</td>
+        <td>Sharp-edge test, small-parts test, toxicity test, electrical safety test</td>
+      </tr>
+      <tr>
+        <td class="accent-cell">Environmental</td>
+        <td>Will it survive the conditions of use (temperature, moisture, UV, drop)?</td>
+        <td>Climate chamber, salt spray, UV exposure, immersion test</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <strong>Memory aid:</strong> &ldquo;<strong>FU PASE</strong>&rdquo; &mdash; <strong>F</strong>unctional, <strong>U</strong>ser, <strong>P</strong>erformance, <strong>A</strong>esthetic, <strong>S</strong>afety, <strong>E</strong>nvironmental.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Types of Testing</span></div>
+    <div>09 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s10">
+  <div class="slide-title-row">
+    <h2>Functional Testing</h2>
+    <div class="stage-tag">Explain</div>
+  </div>
+  <p class="lead"><strong>Functional testing</strong> checks whether the prototype performs each function listed in the design specification.</p>
+  <h3>How to do it</h3>
+  <ol>
+    <li>List every function from your specification (e.g., &ldquo;holds phone in portrait and landscape&rdquo;).</li>
+    <li>Operate the prototype exactly as a user would.</li>
+    <li>Record whether each function works &mdash; with photos or video evidence.</li>
+    <li>Note any function that fails, partially works, or requires too much force / dexterity.</li>
+  </ol>
+  <h3>Example: 3D-printed phone stand</h3>
+  <ul>
+    <li>Function 1 &mdash; holds phone upright: <strong>pass</strong></li>
+    <li>Function 2 &mdash; stable on smooth surface: <strong>fail (slides)</strong></li>
+    <li>Function 3 &mdash; allows charging cable to connect: <strong>pass</strong></li>
+  </ul>
+  <div class="callout">
+    <strong>Evidence tip:</strong> Cambridge coursework expects photographs of the functional test in progress &mdash; not just a written description.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Functional Testing</span></div>
+    <div>10 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s11">
+  <div class="slide-title-row">
+    <h2>User (Ergonomic) Testing</h2>
+    <div class="stage-tag">Explain</div>
+  </div>
+  <p class="lead"><strong>User testing</strong> checks whether the intended user can operate the product comfortably, safely and efficiently.</p>
+  <h3>Common methods</h3>
+  <ul>
+    <li><strong>User trials:</strong> watch real users complete a task; time them and observe errors</li>
+    <li><strong>Questionnaires / surveys:</strong> ask users to rate ease of use, comfort, appearance</li>
+    <li><strong>Focus groups:</strong> small group discussion led by the designer</li>
+    <li><strong>Anthropometric checks:</strong> compare product dimensions with body-size data for the target user (e.g., 5th&ndash;95th percentile hand size)</li>
+  </ul>
+  <h3>Example: 3D-printed door handle</h3>
+  <p>A handle designed for &ldquo;adult hand, 50th percentile&rdquo; should be tested with both small (5th percentile) and large (95th percentile) hands &mdash; not just the designer's own hand.</p>
+  <div class="callout">
+    <strong>Cambridge exam tip:</strong> &ldquo;Designer bias&rdquo; is a common weakness &mdash; testing only with yourself is not user testing. Always test with the <em>intended</em> user group.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>User Testing</span></div>
+    <div>11 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s12">
+  <div class="slide-title-row">
+    <h2>Performance Testing</h2>
+    <div class="stage-tag">Explain</div>
+  </div>
+  <p class="lead"><strong>Performance testing</strong> measures whether the product meets specific quantitative targets (load, speed, durability, accuracy).</p>
+  <h3>Common performance tests</h3>
+  <ul>
+    <li><strong>Load / stress test:</strong> apply a known force and check it does not break (e.g., bookshelf holds 20 kg)</li>
+    <li><strong>Drop test:</strong> drop from a specified height and check for damage</li>
+    <li><strong>Cycle / fatigue test:</strong> open and close a hinge 10,000 times; check it still works</li>
+    <li><strong>Accuracy test:</strong> measure dimensions against the specification (e.g., &plusmn; 0.5 mm)</li>
+  </ul>
+  <h3>Example: 3D-printed bracket</h3>
+  <p>Specification: &ldquo;support a 5 kg load without permanent deformation.&rdquo; Hang a 5 kg weight on the bracket for 1 minute &mdash; measure deflection with a ruler before, during and after.</p>
+  <div class="callout">
+    <strong>Why measure with numbers?</strong> A statement like &ldquo;it broke&rdquo; is opinion. A statement like &ldquo;it failed at 3.2 kg, below the 5 kg target&rdquo; is evidence. Cambridge rewards evidence.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Performance Testing</span></div>
+    <div>12 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s13">
+  <div class="slide-title-row">
+    <h2>Aesthetic &amp; Safety Testing</h2>
+    <div class="stage-tag">Explain</div>
+  </div>
+  <div class="two-col">
+    <div>
+      <h3>Aesthetic testing</h3>
+      <p>Does the appearance match the design intent and appeal to the target market?</p>
+      <ul>
+        <li>Compare the prototype with the original moodboard</li>
+        <li>Show the prototype to a focus group from the target market</li>
+        <li>Ask users to rate colour, shape, texture, finish (1&ndash;5 scale)</li>
+        <li>Use A/B preference tests between two design options</li>
+      </ul>
+      <p class="muted small">Aesthetic is subjective &mdash; so test with multiple users, not just one.</p>
+    </div>
+    <div>
+      <h3>Safety testing</h3>
+      <p>Does the product pose any risk to the user or to children?</p>
+      <ul>
+        <li><strong>Sharp-edge test:</strong> run a cotton wool swab along edges &mdash; any snagging is a fail</li>
+        <li><strong>Small-parts test:</strong> check no part fits inside a &ldquo;small parts cylinder&rdquo; (for toys)</li>
+        <li><strong>Toxicity test:</strong> confirm materials are food-safe / non-toxic</li>
+        <li><strong>Stability test:</strong> does it tip over under normal use?</li>
+        <li><strong>BS / CE / EN standards</strong> compliance check</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Safety is non-negotiable:</strong> A product that fails the safety test cannot be sold &mdash; no matter how well it scores on the other five tests.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Aesthetic &amp; Safety Testing</span></div>
+    <div>13 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s14">
+  <div class="slide-title-row">
+    <h2>Environmental Testing</h2>
+    <div class="stage-tag">Explain</div>
+  </div>
+  <p class="lead"><strong>Environmental testing</strong> checks that the product will survive the conditions it will meet in real use &mdash; temperature, moisture, UV light, impact, vibration.</p>
+  <div class="split">
+    <div>
+      <h3>Common environmental tests</h3>
+      <ul>
+        <li><strong>Temperature:</strong> hot / cold chamber (e.g., -20&deg;C to +60&deg;C)</li>
+        <li><strong>Moisture:</strong> water spray, immersion or humidity chamber</li>
+        <li><strong>UV exposure:</strong> sunlight simulator to check colour fading</li>
+        <li><strong>Salt spray:</strong> corrosion resistance for metals</li>
+        <li><strong>Vibration:</strong> simulated transport conditions</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Example: outdoor 3D-printed plant pot</h3>
+      <p>The pot will sit outdoors. Tests should include:</p>
+      <ul>
+        <li>UV exposure test (does PLA biodegrade / fade?)</li>
+        <li>Water immersion (does it absorb water and weaken?)</li>
+        <li>Drop test onto concrete from 1 m</li>
+      </ul>
+      <p class="muted small">Material choice (e.g., PETG, ASA, ABS) is driven by environmental testing.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Design tip:</strong> Always test in the conditions of <em>use</em>, not in the design room. A 3D-printed part that feels strong indoors may become brittle after 6 months of sunlight.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Environmental Testing</span></div>
+    <div>14 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s15">
+  <div class="slide-title-row">
+    <h2>Testing Against the Specification</h2>
+    <div class="stage-tag">Explain &middot; Cambridge coursework essential</div>
+  </div>
+  <p class="lead">Every test must trace back to a specific point in your <strong>design specification</strong>. If a test does not match a specification point, it is either an unnecessary test or your specification is incomplete.</p>
+  <table>
+    <thead>
+      <tr><th>Specification point</th><th>Test type</th><th>Test method</th><th>Pass / fail</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Must hold a phone up to 90 mm wide</td><td>Functional</td><td>Try phone widths 70, 80, 90 mm</td><td>&nbsp;</td></tr>
+      <tr><td>Must not slip on a smooth desk</td><td>Performance</td><td>Place on glass; tilt to 15&deg;; check sliding</td><td>&nbsp;</td></tr>
+      <tr><td>Must weigh less than 100 g</td><td>Performance</td><td>Weigh on digital scales</td><td>&nbsp;</td></tr>
+      <tr><td>Must appeal to teenagers</td><td>Aesthetic</td><td>Survey 10 students aged 13&ndash;17</td><td>&nbsp;</td></tr>
+      <tr><td>Must have no sharp edges</td><td>Safety</td><td>Cotton-wool snag test on all edges</td><td>&nbsp;</td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <strong>Cambridge coursework tip:</strong> A testing report without a specification is a description; a testing report <em>against</em> the specification is evidence. Always pair the two.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Specification Testing</span></div>
+    <div>15 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s16">
+  <div class="slide-title-row">
+    <h2>Worked Example: 3D-Printed Phone Stand</h2>
+    <div class="stage-tag">Explain &middot; Putting it together</div>
+  </div>
+  <p class="lead">A student designed a 3D-printed phone stand for use on a school desk. Here is a sample testing plan against the specification.</p>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Spec point</th><th>Test type</th><th>Test method</th><th>Expected</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>T1</td><td>Holds phone 70&ndash;90 mm wide</td><td>Functional</td><td>Try phones of widths 70, 80, 90 mm</td><td>All three fit securely</td></tr>
+      <tr><td>T2</td><td>Stable on a 15&deg; tilt</td><td>Performance</td><td>Place on tilting surface; check sliding</td><td>No sliding</td></tr>
+      <tr><td>T3</td><td>Weighs &lt; 100 g</td><td>Performance</td><td>Weigh on digital scale</td><td>&lt; 100 g</td></tr>
+      <tr><td>T4</td><td>Appeals to 13&ndash;17 year olds</td><td>Aesthetic</td><td>Survey 10 students (1&ndash;5 rating)</td><td>Average &ge; 3.5</td></tr>
+      <tr><td>T5</td><td>No sharp edges</td><td>Safety</td><td>Cotton-wool snag test</td><td>No snagging</td></tr>
+      <tr><td>T6</td><td>Survives 1 m drop onto carpet</td><td>Environmental</td><td>Drop test from 1 m, 3 times</td><td>No cracks or breaks</td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <strong>Notice:</strong> Each test is mapped to a specification point &mdash; nothing is tested &ldquo;just because&rdquo;. This is the standard Cambridge expects in the testing section of your portfolio.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Worked Example</span></div>
+    <div>16 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s17">
+  <div class="slide-title-row">
+    <h2>Classify the Test &mdash; Quick Quiz</h2>
+    <div class="stage-tag">Explain &middot; Mini-quiz</div>
+  </div>
+  <p class="lead">For each scenario, decide which type of testing is being done.</p>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Test scenario</th><th>Your answer</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Hanging a 5 kg weight on a shelf bracket for 1 minute to check it does not break</td><td class="muted">&nbsp; &nbsp; ? &nbsp; &nbsp;</td></tr>
+      <tr><td>2</td><td>Showing two colour options to a focus group and asking which they prefer</td><td class="muted">&nbsp; &nbsp; ? &nbsp; &nbsp;</td></tr>
+      <tr><td>3</td><td>Running a cotton-wool swab along all edges of a toy to check for snags</td><td class="muted">&nbsp; &nbsp; ? &nbsp; &nbsp;</td></tr>
+      <tr><td>4</td><td>Leaving a sample in a UV chamber for 200 hours to check colour fading</td><td class="muted">&nbsp; &nbsp; ? &nbsp; &nbsp;</td></tr>
+      <tr><td>5</td><td>Watching a 12-year-old try to open a drink bottle and timing them</td><td class="muted">&nbsp; &nbsp; ? &nbsp; &nbsp;</td></tr>
+      <tr><td>6</td><td>Pressing each button on a TV remote to check the right channel changes</td><td class="muted">&nbsp; &nbsp; ? &nbsp; &nbsp;</td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <strong>Answers:</strong> 1 = Performance &middot; 2 = Aesthetic &middot; 3 = Safety &middot; 4 = Environmental &middot; 5 = User &middot; 6 = Functional
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Mini Quiz</span></div>
+    <div>17 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s18">
+  <div class="slide-title-row">
+    <h2>Session 1 &mdash; Worksheet</h2>
+    <div class="stage-tag">Extend &middot; 10 min &middot; Individual</div>
+  </div>
+  <div class="worksheet">
+    <div class="ws-q">
+      <span class="q-num">Q1.</span><span class="q-text">Name the <strong>six types of testing</strong> a designer should consider when testing a prototype.</span>
+    </div>
+    <div class="ws-q">
+      <span class="q-num">Q2.</span><span class="q-text">For each of the following products, suggest <strong>one test</strong> you would carry out and <strong>which type of test</strong> it is:</span>
+      <ol style="margin-top: 8px;">
+        <li>A 3D-printed phone case for a teenager</li>
+        <li>A wooden children's toy for ages 3+</li>
+        <li>An outdoor metal bicycle rack for a school</li>
+      </ol>
+    </div>
+    <div class="ws-q">
+      <span class="q-num">Q3.</span><span class="q-text">Explain in 2&ndash;3 sentences why <strong>testing against the design specification</strong> is more useful than simply &ldquo;trying the product out&rdquo;.</span>
+    </div>
+  </div>
+  <p class="small" style="margin-top: 12px;">Hand in at the end of Session 1. Marked out of 10. Full mark scheme available on the teacher's copy.</p>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Extend &middot; Worksheet</span></div>
+    <div>18 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s19">
+  <div class="slide-title-row">
+    <h2>Exit Ticket &mdash; Session 1</h2>
+    <div class="stage-tag">Evaluate &middot; 5 min &middot; On paper</div>
+  </div>
+  <p class="lead">Answer on paper or mini-whiteboard. Hand in as you leave the room.</p>
+  <div style="margin-top: 30px;">
+    <div class="exit-q">
+      <div class="q-num">1</div>
+      <div class="q-body">Name <strong>three</strong> types of testing carried out on a prototype.</div>
+    </div>
+    <div class="exit-q">
+      <div class="q-num">2</div>
+      <div class="q-body">Why is it important to test a prototype <strong>against the design specification</strong> rather than just &ldquo;trying it out&rdquo;?</div>
+    </div>
+    <div class="exit-q">
+      <div class="q-num">3</div>
+      <div class="q-body">Give <strong>one example</strong> of a <strong>safety test</strong> for a child's wooden toy.</div>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Teacher note:</strong> Use responses to identify misconceptions to address at the start of Session 2 (especially confusion between performance and user testing).
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Evaluate &middot; Exit Ticket</span></div>
+    <div>19 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide section-divider" id="s20">
+  <div class="big-num">0<span>2</span></div>
+  <h2>Session 2 &mdash; Test Plans &amp; Iteration</h2>
+  <p class="lead muted">45 minutes &middot; Practice-focused</p>
+  <div class="timing-strip" style="max-width: 1000px; margin: 40px auto;">
+    <div class="timing-card">
+      <div class="stage">Engage</div>
+      <div class="mins">5 min</div>
+      <div class="desc">Famous product failures</div>
+    </div>
+    <div class="timing-card">
+      <div class="stage">Explore</div>
+      <div class="mins">5 min</div>
+      <div class="desc">What makes a test plan complete?</div>
+    </div>
+    <div class="timing-card">
+      <div class="stage">Explain</div>
+      <div class="mins">15 min</div>
+      <div class="desc">Test plans, destructive vs non-destructive, iteration</div>
+    </div>
+    <div class="timing-card">
+      <div class="stage">Extend</div>
+      <div class="mins">15 min</div>
+      <div class="desc">Past-paper practice</div>
+    </div>
+    <div class="timing-card">
+      <div class="stage">Evaluate</div>
+      <div class="mins">5 min</div>
+      <div class="desc">Exit ticket &amp; homework brief</div>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Session 2 Agenda</span></div>
+    <div>20 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s21">
+  <div class="slide-title-row">
+    <h2>When Testing Was Skipped</h2>
+    <div class="stage-tag">Engage &middot; 5 min</div>
+  </div>
+  <p class="lead">Three famous product failures that better testing could have prevented:</p>
+  <div class="two-col">
+    <div class="col-card">
+      <h3>Samsung Galaxy Note 7 (2016)</h3>
+      <p>Batteries caught fire on a global scale. The recall cost Samsung an estimated <strong>US$5.3 billion</strong>. The cause: a battery design that passed manufacturing tests but failed real-world thermal testing.</p>
+    </div>
+    <div class="col-card">
+      <h3>Segway PT (2001)</h3>
+      <p>Hyped as the future of transport, but it failed user testing with the <em>actual</em> target market (commuters in cities) &mdash; too heavy to carry, too fast for pavements, too slow for roads.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Discussion prompt:</strong> For each failure, which <em>type</em> of testing was skipped or done poorly? (Performance / User / Environmental / Safety?)
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Engage</span></div>
+    <div>21 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide section-divider" id="s22">
+  <div class="big-num" style="font-size:120px;">EXPLAIN</div>
+  <h2>Test Plans, Materials &amp; Iteration</h2>
+  <p class="lead muted">From one-off tests to a structured test plan</p>
+  <div class="pills" style="justify-content: center; margin-top: 30px;">
+    <span class="pill">Test plan structure</span>
+    <span class="pill">Destructive</span>
+    <span class="pill">Non-destructive</span>
+    <span class="pill">Materials tests</span>
+    <span class="pill">Iterative design</span>
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Explain &mdash; Section Opener</span></div>
+    <div>22 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s23">
+  <div class="slide-title-row">
+    <h2>What Is a Test Plan?</h2>
+    <div class="stage-tag">Explain</div>
+  </div>
+  <p class="lead">A <strong>test plan</strong> is a structured document that records <em>what</em> is being tested, <em>how</em> it will be tested, what the <em>expected</em> result is, and what the <em>actual</em> result was.</p>
+  <h3>Why use a test plan?</h3>
+  <ul>
+    <li>Forces the designer to <strong>think before testing</strong> &mdash; not test on the spot</li>
+    <li>Provides <strong>evidence</strong> for the design portfolio and Cambridge coursework</li>
+    <li>Allows tests to be <strong>repeated</strong> by another person and checked for reliability</li>
+    <li>Makes it obvious which tests have not been done yet</li>
+  </ul>
+  <h3>Standard structure</h3>
+  <table class="trace-table">
+    <tr><th>Test ID</th><th>Specification point</th><th>Test type</th><th>Method</th><th>Expected</th><th>Actual</th></tr>
+    <tr><td>T1</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+  </table>
+  <div class="callout">
+    <strong>Cambridge coursework tip:</strong> The Cambridge portfolio guide explicitly asks for a &ldquo;testing report&rdquo; with this structure. Marks are lost when students test informally and do not record the actual result.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Test Plans</span></div>
+    <div>23 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s24">
+  <div class="slide-title-row">
+    <h2>Test Plan &mdash; Worked Example</h2>
+    <div class="stage-tag">Explain &middot; Step by step</div>
+  </div>
+  <p class="lead">A 3D-printed phone stand. Specification point: &ldquo;must hold a phone 70&ndash;90 mm wide without slipping&rdquo;.</p>
+  <table class="trace-table">
+    <tr><th>Test ID</th><th>Spec point</th><th>Test type</th><th>Method</th><th>Expected</th><th>Actual</th></tr>
+    <tr><td>T1</td><td>Holds 70 mm phone</td><td>Functional</td><td>Place a 70 mm phone in the stand; observe</td><td>Phone sits securely</td><td>Pass</td></tr>
+    <tr><td>T2</td><td>Holds 80 mm phone</td><td>Functional</td><td>Place an 80 mm phone; observe</td><td>Phone sits securely</td><td>Pass</td></tr>
+    <tr class="highlight"><td>T3</td><td>Holds 90 mm phone</td><td>Functional</td><td>Place a 90 mm phone; observe</td><td>Phone sits securely</td><td>Fail &mdash; loose</td></tr>
+    <tr><td>T4</td><td>Stable on smooth surface</td><td>Performance</td><td>Place on glass; tilt to 15&deg;</td><td>No sliding</td><td>Fail &mdash; slides</td></tr>
+  </table>
+  <div class="callout">
+    <strong>Notice:</strong> T3 and T4 <em>failed</em>. That is good &mdash; it tells the designer exactly what to fix in iteration 2 (widen the slot, add rubber feet). A test plan with no failures usually means the tests were too easy.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Test Plan Example</span></div>
+    <div>24 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s25">
+  <div class="slide-title-row">
+    <h2>Destructive vs Non-Destructive Testing</h2>
+    <div class="stage-tag">Explain</div>
+  </div>
+  <table>
+    <thead>
+      <tr><th></th><th>Non-destructive testing (NDT)</th><th>Destructive testing</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="accent-cell">Definition</td>
+        <td>The product / sample is <em>not damaged</em> by the test and can still be used</td>
+        <td>The product / sample is <em>damaged or destroyed</em> by the test</td>
+      </tr>
+      <tr>
+        <td class="accent-cell">When used</td>
+        <td>Functional, user, aesthetic, dimensional, visual inspection</td>
+        <td>Tensile, hardness, fatigue, stress-to-failure tests</td>
+      </tr>
+      <tr>
+        <td class="accent-cell">Examples</td>
+        <td>Visual inspection, weighing, measuring, drop test (if it survives), user trial</td>
+        <td>Pull test to break, fatigue to failure, crush test, chemical analysis</td>
+      </tr>
+      <tr>
+        <td class="accent-cell">Cost</td>
+        <td>Low &mdash; same prototype can be reused</td>
+        <td>High &mdash; each test consumes a sample</td>
+      </tr>
+      <tr>
+        <td class="accent-cell">Use in school</td>
+        <td>Most school testing is NDT (we have only one prototype!)</td>
+        <td>Used only for material samples, not the final prototype</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <strong>Cambridge exam tip:</strong> Be ready to <em>classify</em> a test as destructive or non-destructive. A drop test that the product survives is <em>non-destructive</em>; a drop test that breaks it is <em>destructive</em> &mdash; the test itself is the same, the outcome differs.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Destructive vs NDT</span></div>
+    <div>25 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s26">
+  <div class="slide-title-row">
+    <h2>Materials Testing</h2>
+    <div class="stage-tag">Explain</div>
+  </div>
+  <p class="lead">Before a material is chosen for a product, samples are tested to confirm the material has the required properties. Common materials tests:</p>
+  <div class="split">
+    <div>
+      <h3>Common materials tests</h3>
+      <ul>
+        <li><strong>Tensile test:</strong> how much force a sample takes before it stretches or snaps</li>
+        <li><strong>Hardness test:</strong> how well a material resists scratching or indentation</li>
+        <li><strong>Impact test:</strong> how much energy a sample absorbs when struck (e.g., Izod, Charpy)</li>
+        <li><strong>Fatigue test:</strong> repeated loading cycles until failure</li>
+        <li><strong>Flexure test:</strong> how much a sample bends before breaking</li>
+      </ul>
+    </div>
+    <div>
+      <div class="figure">
+        <img src="images_eng/materials_testing.jpg" alt="Materials testing laboratory">
+        <div class="caption">Tensile testing machine &mdash; measures load vs extension</div>
+      </div>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>For 3D-printed parts:</strong> material tests are especially important because printing orientation, layer adhesion and infill density all affect the final strength &mdash; the bulk material data sheet does not tell the full story.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Materials Testing</span></div>
+    <div>26 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s27">
+  <div class="slide-title-row">
+    <h2>Iterative Design &amp; Testing</h2>
+    <div class="stage-tag">Explain</div>
+  </div>
+  <p class="lead"><strong>Iterative design</strong> is a cyclic process of <em>designing, making, testing and refining</em>. Each cycle uses the test results to improve the next prototype.</p>
+  <div style="text-align: center; margin: 24px 0; padding: 18px; border: 1px solid var(--line); background: #FAFAFA;">
+    <p style="font-family: 'JetBrains Mono', monospace; font-size: 20px; letter-spacing: 0.05em;">
+      <span style="color: var(--accent);">Design</span>
+      &nbsp;&rarr;&nbsp; <span>Make</span>
+      &nbsp;&rarr;&nbsp; <span>Test</span>
+      &nbsp;&rarr;&nbsp; <span>Evaluate</span>
+      &nbsp;&rarr;&nbsp; <span style="color: var(--accent);">Refine</span>
+      &nbsp;&rarr;&nbsp; <span style="color: var(--muted);">(repeat)</span>
+    </p>
+  </div>
+  <div class="two-col">
+    <div>
+      <h3>Why iterate?</h3>
+      <ul>
+        <li>First prototypes almost never work fully</li>
+        <li>Test results reveal problems the designer did not foresee</li>
+        <li>Users behave differently from designers</li>
+        <li>Each cycle is faster and cheaper than a single &ldquo;perfect&rdquo; attempt</li>
+      </ul>
+    </div>
+    <div>
+      <h3>3D printing and iteration</h3>
+      <p>3D printing is ideal for iterative design because:</p>
+      <ul>
+        <li>Each prototype can be made in hours, not weeks</li>
+        <li>Changing the CAD model and reprinting is cheap</li>
+        <li>Multiple variations (A/B) can be tested side by side</li>
+        <li>Failed prints are still evidence for the portfolio</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Dyson's 5,127 prototypes</strong> were an iterative design process &mdash; each failure taught him what to change next. Iteration is not &ldquo;starting again&rdquo;; it is <em>building on what you learned</em>.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Iterative Design</span></div>
+    <div>27 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s28">
+  <div class="slide-title-row">
+    <h2>Past Paper Practice</h2>
+    <div class="stage-tag">Extend &middot; Cambridge 0445 style</div>
+  </div>
+  <p class="lead">A student has designed and 3D-printed a <strong>desk organiser</strong> for pens and rulers. Their specification includes the following points. For each point, design a <strong>test</strong> (state the type of test and the method).</p>
+  <table>
+    <thead>
+      <tr><th>Spec point</th><th>Type of test</th><th>Test method</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>(a) Must hold at least 8 pens</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>(b) Must not tip over when full</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>(c) Must appeal to secondary students</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>(d) Must have no sharp edges</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+      <tr><td>(e) Must survive a 1 m drop onto carpet</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <strong>Try it now &mdash; 10 minutes.</strong> Work individually to complete the table. The teacher will reveal the suggested answers using the mark scheme after time is up.
+  </div>
+  <p class="small">Source: Adapted from Cambridge IGCSE D&amp;T 0445 Paper 1 style. Full past papers linked on the References slide.</p>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Extend &middot; Past Paper</span></div>
+    <div>28 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s29">
+  <div class="slide-title-row">
+    <h2>Worksheet &mdash; Test Plan &amp; Iteration</h2>
+    <div class="stage-tag">Extend &middot; 10 min individual &middot; 5 min peer check</div>
+  </div>
+  <div class="worksheet">
+    <div class="ws-q">
+      <span class="q-num">Q1.</span><span class="q-text">Classify each of the following tests as <strong>destructive</strong> or <strong>non-destructive</strong>:</span>
+      <ol style="margin-top: 8px;">
+        <li>Weighing a 3D-printed part on a digital scale</li>
+        <li>Pulling a plastic sample until it snaps to measure its tensile strength</li>
+        <li>Asking five users to rate the appearance of a phone case on a 1&ndash;5 scale</li>
+        <li>Dropping a prototype from 1 m until it breaks</li>
+      </ol>
+    </div>
+    <div class="ws-q">
+      <span class="q-num">Q2.</span><span class="q-text">Complete the test plan below for a 3D-printed <strong>bookend</strong> that must support books up to 1 kg without slipping on a wooden shelf:</span>
+      <table>
+        <thead>
+          <tr><th>Test ID</th><th>Spec point</th><th>Test type</th><th>Method</th><th>Expected</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>T1</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+          <tr><td>T2</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="ws-q">
+      <span class="q-num">Q3.</span><span class="q-text">In one sentence, explain how <strong>iterative design</strong> uses test results to improve a product.</span>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Extend &middot; Worksheet</span></div>
+    <div>29 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s30">
+  <div class="slide-title-row">
+    <h2>Exit Ticket &mdash; Session 2</h2>
+    <div class="stage-tag">Evaluate &middot; 5 min &middot; On paper</div>
+  </div>
+  <p class="lead">Answer on paper or mini-whiteboard. Hand in as you leave.</p>
+  <div style="margin-top: 30px;">
+    <div class="exit-q">
+      <div class="q-num">1</div>
+      <div class="q-body">State the difference between <strong>destructive</strong> and <strong>non-destructive</strong> testing.</div>
+    </div>
+    <div class="exit-q">
+      <div class="q-num">2</div>
+      <div class="q-body">List the <strong>six columns</strong> of a structured test plan.</div>
+    </div>
+    <div class="exit-q">
+      <div class="q-num">3</div>
+      <div class="q-body">Why is <strong>iterative design</strong> more effective than trying to design a perfect product on the first attempt?</div>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Teacher note:</strong> Use responses to identify whether students can distinguish destructive vs non-destructive, and whether they remember the test plan structure for the homework.
+  </div>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Evaluate &middot; Exit Ticket</span></div>
+    <div>30 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s31">
+  <div class="slide-title-row">
+    <h2>Homework Brief</h2>
+    <div class="stage-tag">Take home &middot; Due next lesson</div>
+  </div>
+  <p class="lead">This homework is <strong>printed and handed out</strong> &mdash; you do not need to copy the questions. Write your answers in the spaces provided.</p>
+  <div class="two-col">
+    <div class="col-card">
+      <div class="session-tag">PART A &middot; 5 MARKS</div>
+      <h3>Test Plan</h3>
+      <p>Complete a 5-row test plan for a 3D-printed <strong>desktop phone stand</strong> (provided in the homework handout). Use one row per type of test.</p>
+    </div>
+    <div class="col-card">
+      <div class="session-tag">PART B &middot; 5 MARKS</div>
+      <h3>Testing &amp; Iteration</h3>
+      <p>Short-answer questions on destructive vs non-destructive testing, and explaining how iterative design uses test results to refine a product.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <strong>Deliverables:</strong> Two printable files are provided &mdash; <code class="inline">Unit9_Testing_Homework.docx</code> (editable) and <code class="inline">Unit9_Testing_Homework.pdf</code> (print-ready). The <strong>mark scheme</strong> is in a separate teacher-only file: <code class="inline">Unit9_Testing_MarkScheme.docx</code>.
+  </div>
+  <p class="small">Total: 10 marks &middot; Estimated time: 30 minutes</p>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Homework Brief</span></div>
+    <div>31 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide" id="s32">
+  <div class="slide-title-row">
+    <h2>References &amp; Resources</h2>
+    <div class="stage-tag">For teachers &amp; students</div>
+  </div>
+  <ul class="ref-list">
+    <li>
+      <span class="num">01</span>
+      <div>
+        <div class="title">Cambridge IGCSE Design &amp; Technology 0445 &mdash; official syllabus</div>
+        <div class="small">Official syllabus &mdash; design process, materials, testing, evaluation</div>
+      </div>
+      <a href="https://www.cambridgeinternational.org/programmes-and-qualifications/view/cambridge-igcse-design-and-technology-0445" target="_blank">cambridgeinternational.org &rarr;</a>
+    </li>
+    <li>
+      <span class="num">02</span>
+      <div>
+        <div class="title">Cambridge IGCSE D&amp;T 0445 past papers (official)</div>
+        <div class="small">Question papers, mark schemes &amp; examiner reports &mdash; all sessions free</div>
+      </div>
+      <a href="https://www.cambridgeinternational.org/programmes-and-qualifications/cambridge-igcse-design-and-technology-0445/past-papers" target="_blank">cambridgeinternational.org &rarr;</a>
+    </li>
+    <li>
+      <span class="num">03</span>
+      <div>
+        <div class="title">Cambridge IGCSE (9&ndash;1) Design &amp; Technology 0979</div>
+        <div class="small">Alternative 9&ndash;1 grading syllabus &mdash; similar content</div>
+      </div>
+      <a href="https://www.cambridgeinternational.org/programmes-and-qualifications/view/cambridge-igcse-design-and-technology-9-1-0979" target="_blank">cambridgeinternational.org &rarr;</a>
+    </li>
+    <li>
+      <span class="num">04</span>
+      <div>
+        <div class="title">Design Tech Guide &mdash; IGCSE D&amp;T 0445 Paper 1 revision notes</div>
+        <div class="small">Free revision notes covering product design, materials, testing</div>
+      </div>
+      <a href="https://www.designtechguide.com/revision/0445-igcse-paper-1" target="_blank">designtechguide.com &rarr;</a>
+    </li>
+    <li>
+      <span class="num">05</span>
+      <div>
+        <div class="title">XtraPapers &mdash; CAIE IGCSE D&amp;T 0445 past papers archive</div>
+        <div class="small">All sessions from 2002 to 2025, free PDF download</div>
+      </div>
+      <a href="https://xtrapapers.co/papers/caie/igcse/design-and-technology-0445" target="_blank">xtrapapers.co &rarr;</a>
+    </li>
+    <li>
+      <span class="num">06</span>
+      <div>
+        <div class="title">IGCSE 0445 Design &amp; Technology Portfolio Guide</div>
+        <div class="small">Detailed portfolio structure including the testing section (Step 5: Test Prototype)</div>
+      </div>
+      <a href="https://www.scribd.com/document/813210764/Design-Technology-0445-Portfolio-Content-Detailed" target="_blank">scribd.com &rarr;</a>
+    </li>
+    <li>
+      <span class="num">07</span>
+      <div>
+        <div class="title">Stanford Biodesign &mdash; Prototyping: Test, Assess, and Iterate</div>
+        <div class="small">Free guide on test method development as an iterative process</div>
+      </div>
+      <a href="https://biodesignguide.stanford.edu/wp-content/uploads/2022/08/Prototyping-Test-Assess-and-Iterate-v1.pdf" target="_blank">biodesignguide.stanford.edu &rarr;</a>
+    </li>
+  </ul>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>References</span></div>
+    <div>32 / 33</div>
+  </div>
+</section>
+
+
+<section class="slide end-slide" id="s33">
+  <div class="small-tag">END OF UNIT 9</div>
+  <h2>Recap &amp; Next Steps</h2>
+  <p class="lead">In this lesson, you learned how designers test their prototypes &mdash; the discipline that turns a clever idea into a product that actually works in the real world.</p>
+  <div class="stat-block" style="max-width: 900px; margin: 30px auto; text-align: left;">
+    <div class="stat">
+      <div class="num">6</div>
+      <div class="label">types of testing &mdash; functional, user, performance, aesthetic, safety, environmental</div>
+    </div>
+    <div class="stat">
+      <div class="num">2</div>
+      <div class="label">testing categories &mdash; destructive &amp; non-destructive</div>
+    </div>
+    <div class="stat">
+      <div class="num">6</div>
+      <div class="label">columns of a structured test plan</div>
+    </div>
+    <div class="stat">
+      <div class="num">1</div>
+      <div class="label">iterative cycle &mdash; design, make, test, evaluate, refine</div>
+    </div>
+  </div>
+  <div class="callout" style="max-width: 900px; margin: 14px auto;">
+    <strong>Next lesson preview:</strong> Unit 10 &mdash; we use these testing skills on your own 3D-printed prototype. Bring your homework and any test results from your project so far.
+  </div>
+  <p class="small" style="margin-top: 14px;">See you next lesson &middot; bring your homework</p>
+  <div class="slide-footer">
+    <div class="left"><span class="accent-dot"></span> <span>Thank You</span></div>
+    <div>33 / 33</div>
+  </div>
+</section>
+
+</main>
+
+<script>
+  // Slides content is rendered via the deck container above. The slides array below mirrors it.
+  // (Slide content is generated server-side as static HTML.)
+  (function() {
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const counter = document.getElementById('counter');
+    const progressBar = document.getElementById('progressBar');
+    let current = 0;
+
+    function show(index) {
+      if (index < 0 || index >= slides.length) return;
+      slides[current].classList.remove('active');
+      current = index;
+      slides[current].classList.add('active');
+      counter.textContent = String(current + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+      const pct = ((current + 1) / slides.length) * 100;
+      progressBar.style.width = pct + '%';
+      if (document.documentElement.scrollTop !== 0) {
+        document.documentElement.scrollTop = 0;
+      }
+    }
+
+    function next() { show(current + 1); }
+    function prev() { show(current - 1); }
+
+    document.getElementById('nextBtn').addEventListener('click', next);
+    document.getElementById('prevBtn').addEventListener('click', prev);
+    document.getElementById('helpBtn').addEventListener('click', () => {
+      document.getElementById('helpOverlay').classList.toggle('active');
+    });
+    document.getElementById('fullscreenBtn').addEventListener('click', () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); next(); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+      else if (e.key === 'Home') { e.preventDefault(); show(0); }
+      else if (e.key === 'End') { e.preventDefault(); show(slides.length - 1); }
+      else if (e.key === 'f' || e.key === 'F') {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
+      }
+      else if (e.key === 'h' || e.key === 'H') {
+        document.getElementById('helpOverlay').classList.toggle('active');
+      }
+      else if (e.key === 'Escape') {
+        document.getElementById('helpOverlay').classList.remove('active');
+      }
+      else if (e.key === 'p' || e.key === 'P') {
+        window.print();
+      }
+    });
+
+    // Initialize
+    if (slides.length > 0) slides[0].classList.add('active');
+    counter.textContent = '01 / ' + String(slides.length).padStart(2, '0');
+    progressBar.style.width = (1 / slides.length * 100) + '%';
+  })();
+</script>
+</body>
+</html>
