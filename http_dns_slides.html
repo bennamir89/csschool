@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTTP & DNS — Computer Science Slides</title>
+<style>
+:root{
+  --bg:#0b1220;--panel:#121e32;--panel2:#182943;--text:#eef4ff;
+  --muted:#a9bad3;--cyan:#55d6e8;--gold:#ffd166;--green:#7be0ad;
+  --pink:#ff8fa3;--line:#2c405e;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;overflow:hidden}
+.deck{height:100vh;width:100vw;display:flex;align-items:center;justify-content:center;padding:24px}
+.slide{display:none;width:min(1100px,96vw);height:min(650px,90vh);padding:clamp(24px,4vw,54px);
+  background:linear-gradient(145deg,var(--panel),#0f1a2c);border:1px solid var(--line);
+  border-radius:24px;box-shadow:0 24px 70px #0008;position:relative;overflow:auto}
+.slide.active{display:flex;flex-direction:column;animation:appear .25s ease}
+@keyframes appear{from{opacity:.4;transform:translateY(8px)}to{opacity:1;transform:none}}
+.kicker{color:var(--cyan);font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+h1{font-size:clamp(42px,6vw,76px);line-height:1.02;margin:18px 0}
+h2{font-size:clamp(30px,4vw,48px);margin:12px 0 24px}
+h3{color:var(--cyan);margin:0 0 10px;font-size:21px}
+p,li{font-size:clamp(17px,2vw,22px);line-height:1.5;color:var(--muted)}
+strong{color:var(--text)}
+.subtitle{font-size:clamp(20px,2.4vw,27px);max-width:760px}
+.tag{display:inline-block;padding:8px 13px;border:1px solid var(--line);border-radius:99px;color:var(--gold);margin:6px 6px 0 0;font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:10px}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:16px;padding:20px}
+.card p,.card li{font-size:18px;margin:8px 0}
+.callout{border-left:4px solid var(--gold);padding:12px 18px;background:#ffd16612;border-radius:8px;margin-top:18px}
+.flow{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:26px 0}
+.node{background:var(--panel2);border:1px solid var(--cyan);border-radius:14px;padding:16px 18px;text-align:center;min-width:130px}
+.arrow{font-size:28px;color:var(--gold)}
+.code{font-family:Consolas,monospace;background:#07101d;border:1px solid var(--line);padding:16px;border-radius:12px;color:#b8f3d0;font-size:17px;line-height:1.6;overflow-wrap:anywhere}
+.label{color:var(--gold);font-weight:bold;font-size:14px;text-transform:uppercase;letter-spacing:1px}
+.big{font-size:clamp(25px,3vw,36px);color:var(--text);line-height:1.35}
+ul{padding-left:24px}
+li{margin:8px 0}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:17px}
+th,td{padding:13px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--cyan)}
+footer{margin-top:auto;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:14px;padding-top:18px}
+.controls{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;background:#101d30ee;border:1px solid var(--line);padding:9px 13px;border-radius:99px;z-index:5}
+button{background:var(--cyan);color:#07121f;border:0;border-radius:99px;padding:10px 17px;font-weight:700;cursor:pointer}
+button:disabled{opacity:.35;cursor:not-allowed}
+#counter{font-size:14px;color:var(--muted);min-width:52px;text-align:center}
+.progress{position:fixed;top:0;left:0;height:4px;background:var(--cyan);width:0;transition:width .2s;z-index:10}
+.small{font-size:15px;color:var(--muted)}
+@media(max-width:700px){.deck{padding:8px}.slide{height:88vh;padding:24px 20px}.grid{grid-template-columns:1fr}.node{min-width:105px;padding:12px}.arrow{font-size:20px}table{font-size:14px}th,td{padding:8px}}
+@media print{body{overflow:visible;background:white;color:#111}.deck{height:auto;display:block;padding:0}.slide{display:flex!important;width:100%;height:100vh;page-break-after:always;border:0;border-radius:0;box-shadow:none;background:#fff;color:#111}.slide p,.slide li{color:#333}.card,.node{background:#f2f6fa;color:#111}.controls,.progress{display:none}h1,h2,strong{color:#111}}
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<main class="deck">
+
+<section class="slide active">
+  <div class="kicker">Computer Science • Internet protocols</div>
+  <h1>HTTP <span style="color:var(--cyan)">&</span> DNS</h1>
+  <p class="subtitle">How does your browser find a website, and how does it ask the website for a page?</p>
+  <div style="margin-top:28px">
+    <span class="tag">Web communication</span><span class="tag">Domain names</span><span class="tag">Requests & responses</span>
+  </div>
+  <div class="callout"><strong>Big idea:</strong> DNS helps locate the server. HTTP defines how the browser and server communicate.</div>
+  <footer><span>Use ← → or the buttons to navigate</span><span>01</span></footer>
+</section>
+
+<section class="slide">
+  <div class="kicker">Learning objectives</div><h2>By the end, you should be able to…</h2>
+  <div class="grid">
+    <div class="card"><h3>1. Explain HTTP</h3><p>Describe how a browser sends a request and a web server returns a response.</p></div>
+    <div class="card"><h3>2. Explain DNS</h3><p>Describe how a domain name is translated into an IP address.</p></div>
+    <div class="card"><h3>3. Describe the journey</h3><p>Put DNS lookup and HTTP communication in the correct order.</p></div>
+    <div class="card"><h3>4. Compare protocols</h3><p>Identify the different jobs performed by DNS and HTTP/HTTPS.</p></div>
+  </div>
+  <footer><span>Learning objectives</span><span>02</span></footer>
+</section>
+
+<section class="slide">
+  <div class="kicker">Starter • Think, pair, share</div><h2>What happens when you visit a website?</h2>
+  <p class="big">You type <strong>www.example.com</strong> into the address bar and press Enter.</p>
+  <div class="flow">
+    <div class="node">Your browser</div><div class="arrow">→</div>
+    <div class="node">Internet</div><div class="arrow">→</div>
+    <div class="node">Website server</div>
+  </div>
+  <div class="card">
+    <h3>Discuss</h3>
+    <ul>
+      <li>Does the computer understand the website name directly?</li>
+      <li>How might the browser discover the server's location?</li>
+      <li>How does the browser ask the server for a web page?</li>
+    </ul>
+  </div>
+  <footer><span>Engage</span><span>03</span></footer>
+</section>
+
+<section class="slide">
+  <div class="kicker">Concept 1</div><h2>What is DNS?</h2>
+  <p><strong>DNS</strong> stands for <strong>Domain Name System</strong>.</p>
+  <p>It looks up a human-readable domain name and returns the IP address associated with it.</p>
+  <div class="grid">
+    <div class="card"><div class="label">Domain name</div><p class="big">www.example.com</p><p>Easy for people to remember.</p></div>
+    <div class="card"><div class="label">IP address</div><p class="big" style="color:var(--green)">93.184.216.34</p><p>A numerical address used to identify a device/server on an IP network.</p></div>
+  </div>
+  <div class="callout">Think of DNS like a contacts list: you search for a name and retrieve the number/address linked to it.</div>
+  <footer><span>DNS = name-to-address lookup</span><span>04</span></footer>
+</section>
+
+<section class="slide">
+  <div class="kicker">Explore • DNS lookup</div><h2>How does a DNS lookup work?</h2>
+  <p>The browser needs an IP address before it can contact the correct web server.</p>
+  <div class="flow">
+    <div class="node">1. Browser needs an IP</div><div class="arrow">→</div>
+    <div class="node">2. Ask a DNS resolver</div><div class="arrow">→</div>
+    <div class="node">3. Resolver finds the answer</div>
+  </div>
+  <div class="flow">
+    <div class="node">4. IP address returned</div><div class="arrow">→</div>
+    <div class="node">5. Browser can contact server</div>
+  </div>
+  <div class="callout"><strong>Note:</strong> DNS answers may be cached (temporarily stored), so the resolver may already know the IP address and not need to repeat the full lookup.</div>
+  <footer><span>DNS lookup sequence</span><span>05</span></footer>
+</section>
+
+<section class="slide">
+  <div class="kicker">Concept 2</div><h2>What is HTTP?</h2>
+  <p><strong>HTTP</strong> stands for <strong>Hypertext Transfer Protocol</strong>.</p>
+  <p>It is a set of rules that allows a web browser (client) and a web server to exchange requests and responses.</p>
+  <div class="grid">
+    <div class="card"><h3>HTTP request</h3><p>Sent by the client to ask for a resource, such as a web page or image.</p></div>
+    <div class="card"><h3>HTTP response</h3><p>Sent by the server with a status code and, when appropriate, the requested content.</p></div>
+  </div>
+  <div class="callout">HTTP is an <strong>application-layer protocol</strong>. It defines the format and meaning of messages exchanged between client and server.</div>
+  <footer><span>HTTP = request and response rules</span><span>06</span></footer>
+</section>
+
+<section class="slide">
+  <div class="kicker">HTTP communication</div><h2>Request → Response</h2>
+  <div class="flow" style="align-items:stretch">
+    <div class="node" style="flex:1"><h3>Browser / Client</h3><p>Requests a page</p></div>
+    <div style="display:flex;flex-direction:column;justify-content:center;gap:16px">
+      <div class="arrow">⟶ <span class="small">HTTP request</span></div>
+      <div class="arrow">⟵ <span class="small">HTTP response</span></div>
+    </div>
+    <div class="node" style="flex:1"><h3>Web server</h3><p>Processes request and sends a response</p></div>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="label">Example request</div><div class="code">GET /index.html HTTP/1.1<br>Host: www.example.com</div></div>
+    <div class="card"><div class="label">Example response</div><div class="code">HTTP/1.1 200 OK<br>Content-Type: text/html<br><br>&lt;html&gt;...&lt;/html&gt;</div></div>
+  </div>
+  <p class="small">GET is a request method. 200 OK is an example status code meaning the request succeeded.</p>
+  <footer><span>Client-server communication</span><span>07</span></footer>
+</section>
+
+<section class="slide">
+  <div class="kicker">Important distinction</div><h2>HTTP vs HTTPS</h2>
+  <table>
+    <tr><th>HTTP</th><th>HTTPS</th></tr>
+    <tr><td>Transfers web requests and responses.</td><td>HTTP communication protected using TLS.</td></tr>
+    <tr><td>Data is not encrypted by HTTP itself.</td><td>Provides encryption and helps authenticate the server.</td></tr>
+    <tr><td>Common default port: 80.</td><td>Common default port: 443.</td></tr>
+  </table>
+  <div class="callout"><strong>Remember:</strong> HTTPS is not a different way to find a website. DNS still performs domain-name lookup; HTTPS protects the web communication.</div>
+  <footer><span>Security on the web</span><span>08</span></footer>
+</section>
+
+<section class="slide">
+  <div class="kicker">Put it all together</div><h2>What happens when you open a website?</h2>
+  <div class="flow">
+    <div class="node">1. Enter domain name</div><div class="arrow">→</div>
+    <div class="node">2. DNS lookup</div><div class="arrow">→</div>
+    <div class="node">3. Receive IP address</div>
+  </div>
+  <div class="flow">
+    <div class="node">4. Connect to web server</div><div class="arrow">→</div>
+    <div class="node">5. Send HTTP request</div><div class="arrow">→</div>
+    <div class="node">6. Receive HTTP response</div>
+  </div>
+  <div class="card"><h3>Then…</h3><p>The browser interprets the returned HTML and requests other resources (such as CSS, JavaScript and images) when needed, then displays the page.</p></div>
+  <footer><span>DNS first, then web communication</span><span>09</span></footer>
+</section>
+
+<section class="slide">
+  <div class="kicker">Check your understanding</div><h2>Quick knowledge check</h2>
+  <ol>
+    <li>What does DNS stand for?</li>
+    <li>What is the main purpose of DNS?</li>
+    <li>What does HTTP stand for?</li>
+    <li>Which device usually sends an HTTP request: the client or the server?</li>
+    <li>What does the status code <strong>200 OK</strong> indicate?</li>
+    <li>Give one difference between HTTP and HTTPS.</li>
+  </ol>
+  <div class="callout">Challenge: Explain the journey from typing a domain name to seeing the web page, using the words <strong>DNS, IP address, request, response</strong>.</div>
+  <footer><span>Evaluate</span><span>10</span></footer>
+</section>
+
+<section class="slide">
+  <div class="kicker">Teacher answer guide</div><h2>Suggested answers</h2>
+  <ol>
+    <li>Domain Name System.</li>
+    <li>To translate/look up a domain name and return its associated IP address.</li>
+    <li>Hypertext Transfer Protocol.</li>
+    <li>The client (usually the browser).</li>
+    <li>The request was successful.</li>
+    <li>HTTPS uses TLS to protect communication with encryption and server authentication; HTTP alone does not.</li>
+  </ol>
+  <p class="small">Accept equivalent explanations that correctly describe the purpose of each protocol.</p>
+  <footer><span>Teacher reference</span><span>11</span></footer>
+</section>
+
+<section class="slide">
+  <div class="kicker">Exit ticket</div><h2>One-minute summary</h2>
+  <p class="big">Complete these sentences:</p>
+  <div class="card">
+    <p>1. DNS is used to…</p>
+    <p>2. HTTP is used to…</p>
+    <p>3. DNS is needed before the browser can…</p>
+    <p>4. HTTPS is safer than HTTP because…</p>
+  </div>
+  <h3 style="margin-top:24px">Key takeaway</h3>
+  <p class="big"><span style="color:var(--cyan)">DNS finds the server.</span><br><span style="color:var(--green)">HTTP communicates with the server.</span></p>
+  <footer><span>End of lesson</span><span>12</span></footer>
+</section>
+
+</main>
+<nav class="controls" aria-label="Slide controls">
+  <button id="prev" aria-label="Previous slide">← Back</button>
+  <span id="counter">1 / 12</span>
+  <button id="next" aria-label="Next slide">Next →</button>
+</nav>
+<script>
+const slides=[...document.querySelectorAll('.slide')];
+let current=0;
+const counter=document.getElementById('counter');
+const progress=document.getElementById('progress');
+function showSlide(index){
+  current=Math.max(0,Math.min(index,slides.length-1));
+  slides.forEach((s,i)=>s.classList.toggle('active',i===current));
+  counter.textContent=`${current+1} / ${slides.length}`;
+  progress.style.width=`${((current+1)/slides.length)*100}%`;
+  document.getElementById('prev').disabled=current===0;
+  document.getElementById('next').disabled=current===slides.length-1;
+}
+document.getElementById('prev').addEventListener('click',()=>showSlide(current-1));
+document.getElementById('next').addEventListener('click',()=>showSlide(current+1));
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();showSlide(current+1)}
+  if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();showSlide(current-1)}
+  if(e.key==='Home')showSlide(0);
+  if(e.key==='End')showSlide(slides.length-1);
+});
+showSlide(0);
+</script>
+</body>
+</html>
